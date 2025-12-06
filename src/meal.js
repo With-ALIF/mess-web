@@ -1,5 +1,3 @@
-// meal.js  (ES module version)
-
 import { MealType } from "./models.js";
 import { findStudent, updateStudent } from "./student.js";
 
@@ -11,11 +9,41 @@ function getTodayISO() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function getOrCreateBooking(student, date) {
-  let booking = student.bookings.find((b) => b.date === date);
+function toISODate(date) {
+  if (!date) return getTodayISO();
+
+  if (date instanceof Date) {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  if (typeof date === "string") {
+    if (date.length === 10 && date.includes("-")) {
+      return date;
+    }
+    const d = new Date(date);
+    if (!isNaN(d)) {
+      return toISODate(d);
+    }
+  }
+
+  return getTodayISO();
+}
+
+function ensureBookingsArray(student) {
+  if (!Array.isArray(student.bookings)) {
+    student.bookings = [];
+  }
+}
+
+function getOrCreateBooking(student, dateStr) {
+  ensureBookingsArray(student);
+  let booking = student.bookings.find((b) => b.date === dateStr);
   if (!booking) {
     booking = {
-      date,
+      date: dateStr,
       breakfast: false,
       lunch: false,
       dinner: false
@@ -25,10 +53,17 @@ function getOrCreateBooking(student, date) {
   return booking;
 }
 
-function canCancel(mealType, now) {
-  // Breakfast: 9টার পরে cancel করা যাবে না
-  // Lunch:     1টার পরে
-  // Dinner:    4টার পরে
+function canCancel(mealType, bookingDateStr, now = new Date()) {
+  const todayStr = toISODate(now);
+
+  if (bookingDateStr > todayStr) {
+    return true;
+  }
+
+  if (bookingDateStr < todayStr) {
+    return false;
+  }
+
   const hour = now.getHours();
 
   if (mealType === MealType.Breakfast) return hour < 9;
@@ -37,13 +72,14 @@ function canCancel(mealType, now) {
   return true;
 }
 
-export function bookMeal(rollNo, mealType, date = getTodayISO()) {
+export function bookMeal(rollNo, mealType, date) {
   const student = findStudent(rollNo);
   if (!student) {
     return { ok: false, message: "Student not found" };
   }
 
-  const booking = getOrCreateBooking(student, date);
+  const dateStr = toISODate(date);
+  const booking = getOrCreateBooking(student, dateStr);
 
   if (booking[mealType]) {
     return { ok: false, message: "Meal already booked" };
@@ -54,19 +90,22 @@ export function bookMeal(rollNo, mealType, date = getTodayISO()) {
   return { ok: true, message: "Meal booked successfully" };
 }
 
-export function cancelMeal(rollNo, mealType, date = getTodayISO()) {
+export function cancelMeal(rollNo, mealType, date) {
   const student = findStudent(rollNo);
   if (!student) {
     return { ok: false, message: "Student not found" };
   }
 
-  const booking = student.bookings.find((b) => b.date === date);
+  const dateStr = toISODate(date);
+  ensureBookingsArray(student);
+  const booking = student.bookings.find((b) => b.date === dateStr);
+
   if (!booking || !booking[mealType]) {
     return { ok: false, message: "No booked meal to cancel" };
   }
 
   const now = new Date();
-  if (!canCancel(mealType, now)) {
+  if (!canCancel(mealType, dateStr, now)) {
     return { ok: false, message: "Cancellation time is over for this meal" };
   }
 
@@ -75,14 +114,17 @@ export function cancelMeal(rollNo, mealType, date = getTodayISO()) {
   return { ok: true, message: "Meal cancelled successfully" };
 }
 
-export function getBookingForDate(rollNo, date = getTodayISO()) {
+export function getBookingForDate(rollNo, date) {
   const student = findStudent(rollNo);
   if (!student) return undefined;
-  return student.bookings.find((b) => b.date === date);
+
+  const dateStr = toISODate(date);
+  ensureBookingsArray(student);
+  return student.bookings.find((b) => b.date === dateStr);
 }
 
-// মাসভিত্তিক view এর জন্য
 function isInMonth(booking, month, year) {
+  if (!booking || !booking.date) return false;
   const parts = booking.date.split("-");
   const yyyy = Number(parts[0]);
   const mm = Number(parts[1]);
@@ -95,6 +137,7 @@ export function getBookingsForMonth(rollNo, month, year) {
     return new Error("Student not found");
   }
 
+  ensureBookingsArray(student);
   const list = student.bookings.filter((b) => isInMonth(b, month, year));
   list.sort((a, b) => a.date.localeCompare(b.date));
   return list;
