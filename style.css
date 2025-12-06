@@ -76,7 +76,7 @@ body {
 
 .layout {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 20px;
   margin-top: 16px;
 }
@@ -255,13 +255,14 @@ input[type="file"].form-input {
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   background: #ffffff;
+  width: 100%;
 }
+
 
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.98rem;
-  min-width: 650px;
 }
 
 .table th,
@@ -291,7 +292,6 @@ input[type="file"].form-input {
   background: #ffffff;
   border-radius: 10px;
   overflow: hidden;
-  min-width: 650px;
 }
 
 .billing-table th,
@@ -319,7 +319,6 @@ input[type="file"].form-input {
   background: #ffffff;
   border-radius: 10px;
   overflow: hidden;
-  min-width: 650px;
   box-shadow: 0 3px 10px rgba(148, 163, 184, 0.35);
 }
 
@@ -347,7 +346,6 @@ input[type="file"].form-input {
   background: #ffffff;
   border-radius: 10px;
   overflow: hidden;
-  min-width: 650px;
   box-shadow: 0 3px 10px rgba(148, 163, 184, 0.35);
 }
 
@@ -423,6 +421,22 @@ input[type="file"].form-input {
     flex-direction: column;
     gap: 16px;
   }
+  .table,
+  .billing-table,
+  .summary-table,
+  .report-table {
+    font-size: 0.9rem;
+  }
+  .table th,
+  .table td,
+  .billing-table th,
+  .billing-table td,
+  .summary-table th,
+  .summary-table td,
+  .report-table th,
+  .report-table td {
+    padding: 6px 8px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -450,5 +464,21 @@ input[type="file"].form-input {
   }
   .row {
     flex-direction: column;
+  }
+  .table,
+  .billing-table,
+  .summary-table,
+  .report-table {
+    font-size: 0.9rem;
+  }
+  .table th,
+  .table td,
+  .billing-table th,
+  .billing-table td,
+  .summary-table th,
+  .summary-table td,
+  .report-table th,
+  .report-table td {
+    padding: 5px 6px;
   }
 }
