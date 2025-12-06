@@ -85,6 +85,7 @@ function renderAppShell() {
                 <div class="card-header">
                   <div>
                     <div class="card-title">Student Login</div>
+                    <div class="card-subtitle">Load your profile</div>
                   </div>
                 </div>
                 <div class="form-group">
@@ -116,11 +117,11 @@ function renderAppShell() {
                 <div class="card-header">
                   <div>
                     <div class="card-title">Menu & Booking</div>
-                    <div class="card-subtitle">Book / cancel meals for a date</div>
+                    <div class="card-subtitle">Book or cancel meals for a date</div>
                   </div>
                   <div>
                     <div class="muted" style="font-size:12px; text-align:right;">Select Date</div>
-                    <input id="booking-date" type="date" class="form-input" style="max-width:150px;" />
+                    <input id="booking-date" type="date" class="form-input" style="max-width:160px;" />
                     <div id="today-label" class="badge" style="margin-top:4px;"></div>
                   </div>
                 </div>
@@ -291,7 +292,7 @@ function handleBookingAction(action, mealType) {
   msg.textContent = "";
   if (!roll) {
     msg.textContent = "Please enter your roll number first.";
-    msg.style.color = "red";
+    msg.style.color = "#b91c1c";
     return;
   }
   const date = getSelectedBookingDate();
@@ -299,7 +300,7 @@ function handleBookingAction(action, mealType) {
     action === "book" ? bookMeal(roll, mealType, date) : cancelMeal(roll, mealType, date);
   if (result instanceof Error) {
     msg.textContent = result.message || "Something went wrong.";
-    msg.style.color = "red";
+    msg.style.color = "#b91c1c";
   } else {
     if (result.ok) {
       msg.textContent =
@@ -307,14 +308,14 @@ function handleBookingAction(action, mealType) {
         (action === "book"
           ? "Meal booked successfully."
           : "Meal cancelled successfully.");
-      msg.style.color = "green";
+      msg.style.color = "#15803d";
     } else {
       msg.textContent =
         result.message ||
         (action === "cancel"
           ? "You can no longer cancel this meal."
           : "Action could not be completed.");
-      msg.style.color = "red";
+      msg.style.color = "#b91c1c";
     }
   }
   updateBookingStatus();
@@ -326,14 +327,14 @@ function initBulkBooking() {
     const roll = qs("#stu-roll").value.trim();
     if (!roll) {
       bulkMsg.textContent = "আগে Roll দিয়ে প্রোফাইল লোড করুন।";
-      bulkMsg.style.color = "red";
+      bulkMsg.style.color = "#b91c1c";
       return;
     }
     const startStr = qs("#bulk-start").value;
     const days = Number(qs("#bulk-days").value || 0);
     if (!startStr || days <= 0) {
       bulkMsg.textContent = "Valid শুরু তারিখ ও দিনের সংখ্যা দিন।";
-      bulkMsg.style.color = "red";
+      bulkMsg.style.color = "#b91c1c";
       return;
     }
     const bf = qs("#bulk-bf").checked;
@@ -341,7 +342,7 @@ function initBulkBooking() {
     const dn = qs("#bulk-dinner").checked;
     if (!bf && !ln && !dn) {
       bulkMsg.textContent = "কমপক্ষে একটি মিল নির্বাচন করুন।";
-      bulkMsg.style.color = "red";
+      bulkMsg.style.color = "#b91c1c";
       return;
     }
     const startDate = parseDateInputValue(startStr);
@@ -376,7 +377,7 @@ function initBulkBooking() {
       " দিনের জন্য " +
       (action === "book" ? "বুক" : "ক্যান্সেল") +
       " করা হয়েছে।";
-    bulkMsg.style.color = "#16a34a";
+    bulkMsg.style.color = "#15803d";
     updateBookingStatus();
   }
   qs("#btn-bulk-book").addEventListener("click", () => doBulk("book"));
@@ -497,7 +498,7 @@ function renderAdminContent() {
           <div class="card-header">
             <div>
               <div class="card-title">Today's Menu</div>
-              <div class="card-subtitle">Set today's items</div>
+              <div class="card-subtitle">Set items for the day</div>
             </div>
           </div>
           <div class="form-group">
@@ -524,7 +525,7 @@ function renderAdminContent() {
           <div class="card-header">
             <div>
               <div class="card-title">Meal Prices</div>
-              <div class="card-subtitle">Per meal charge</div>
+              <div class="card-subtitle">Per-meal charges</div>
             </div>
           </div>
           <div class="form-group">
@@ -545,14 +546,38 @@ function renderAdminContent() {
           </div>
         </div>
 
-       
+        <div class="section-spacer"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Data Backup & Restore</div>
+              <div class="card-subtitle">JSON export / import</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary" id="btn-export-backup">Download JSON</button>
+          </div>
+
+          <div class="form-group">
+            <label for="backup-file" class="form-label">Import JSON</label>
+            <input type="file" id="backup-file" class="form-input" accept="application/json" />
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-secondary" id="btn-import-backup">Import Backup</button>
+            <span id="backup-message" class="muted"></span>
+          </div>
+        </div>
+      </div>
 
       <div>
         <div class="card">
           <div class="card-header">
             <div>
               <div class="card-title">Register Student</div>
-              <div class="card-subtitle">Add or edit hall resident</div>
+              <div class="card-subtitle">Add or edit resident</div>
             </div>
           </div>
           <div class="form-group">
@@ -583,7 +608,7 @@ function renderAdminContent() {
           <div class="card-header">
             <div>
               <div class="card-title">Students</div>
-              <div class="card-subtitle">Registered students</div>
+              <div class="card-subtitle">Registered students list</div>
             </div>
           </div>
           <div class="table-wrapper">
@@ -675,34 +700,6 @@ function renderAdminContent() {
         </div>
       </div>
     </div>
-
-     <div class="section-spacer"></div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h3 class="card-title">Data Backup & Restore</h3>
-              <p class="card-subtitle">JSON Backup</p>
-            </div>
-          </div>
-
-          <div class="card-body">
-            <div class="form-group">
-              <button class="btn btn-primary" id="btn-export-backup">Download JSON</button>
-            </div>
-
-            <div class="form-group">
-              <label for="backup-file" class="form-label">Import JSON</label>
-              <input type="file" id="backup-file" class="form-input" accept="application/json" />
-            </div>
-
-            <div class="form-group">
-              <button class="btn btn-secondary" id="btn-import-backup">Import Backup</button>
-              <span id="backup-message" class="muted"></span>
-            </div>
-          </div>
-        </div>
-      </div>
   `;
 }
 
@@ -717,7 +714,7 @@ function setupStudentsTableActions() {
       const student = findStudent(roll);
       if (!student) {
         regMsg.textContent = "Student not found.";
-        regMsg.style.color = "red";
+        regMsg.style.color = "#b91c1c";
         return;
       }
       qs("#reg-name").value = student.name;
@@ -737,7 +734,7 @@ function setupStudentsTableActions() {
       if (!sure) return;
       const res = deleteStudent(roll);
       regMsg.textContent = res.message;
-      regMsg.style.color = res.ok ? "green" : "red";
+      regMsg.style.color = res.ok ? "#15803d" : "#b91c1c";
       if (currentEditingRoll === roll) {
         currentEditingRoll = null;
         regBtn.textContent = "Register";
@@ -776,8 +773,8 @@ function renderMealsReport(report) {
     <div style="margin-bottom:10px;">
       <strong>${title}</strong>
     </div>
-    <div style="margin-bottom:10px;">
-      <table class="table">
+    <div class="table-wrapper" style="max-height:none;">
+      <table class="summary-table">
         <thead>
           <tr>
             <th>Meal</th>
@@ -806,8 +803,8 @@ function renderMealsReport(report) {
     </div>
   `;
   const detailsHtml = `
-    <div class="table-wrapper">
-      <table class="table">
+    <div class="table-wrapper" style="max-height:none; margin-top:8px;">
+      <table class="report-table">
         <thead>
           <tr>
             <th>Roll</th>
@@ -836,8 +833,8 @@ function renderMealsReport(report) {
         </tbody>
       </table>
     </div>
-    <div style="margin-top:8px;">
-      <strong>Grand Total: </strong>${formatCurrency(summary.grandTotal || 0)}
+    <div class="grand-total">
+      Grand Total: ${formatCurrency(summary.grandTotal || 0)}
     </div>
   `;
   container.innerHTML = summaryHtml + detailsHtml;
@@ -935,6 +932,7 @@ function initAdminPanel() {
       dinner: dn || "Not set"
     });
     msg.textContent = "Menu saved.";
+    msg.style.color = "#15803d";
     renderTodayMenu();
   });
   qs("#btn-save-prices").addEventListener("click", () => {
@@ -948,6 +946,7 @@ function initAdminPanel() {
       dinner: isNaN(dn) ? 0 : dn
     });
     msg.textContent = "Prices saved.";
+    msg.style.color = "#15803d";
   });
   qs("#btn-register-student").addEventListener("click", () => {
     const name = qs("#reg-name").value.trim();
@@ -959,14 +958,14 @@ function initAdminPanel() {
     msg.style.color = "#374151";
     if (!name || !roll || !room) {
       msg.textContent = "Name, roll and room are required.";
-      msg.style.color = "red";
+      msg.style.color = "#b91c1c";
       return;
     }
     if (currentEditingRoll) {
       const existing = findStudent(currentEditingRoll);
       if (!existing) {
         msg.textContent = "Original student not found for update.";
-        msg.style.color = "red";
+        msg.style.color = "#b91c1c";
         return;
       }
       const updatedStudent = {
@@ -978,18 +977,18 @@ function initAdminPanel() {
       };
       const res = updateStudent(updatedStudent);
       msg.textContent = res.message || "Student updated.";
-      msg.style.color = res.ok ? "green" : "red";
+      msg.style.color = res.ok ? "#15803d" : "#b91c1c";
       currentEditingRoll = null;
       btn.textContent = "Register";
     } else {
       const res = registerStudent(roll, name, room, balance);
       if (res instanceof Error || res.ok === false) {
         msg.textContent = res.message || "Could not register student.";
-        msg.style.color = "red";
+        msg.style.color = "#b91c1c";
         return;
       }
       msg.textContent = res.message || "Student registered successfully.";
-      msg.style.color = "green";
+      msg.style.color = "#15803d";
     }
     qs("#reg-name").value = "";
     qs("#reg-roll").value = "";
@@ -1008,56 +1007,62 @@ function initAdminPanel() {
     const out = qs("#bill-result");
     if (!roll || isNaN(monthInput) || isNaN(year)) {
       out.textContent = "Select student and enter valid month/year.";
+      out.style.color = "#b91c1c";
       return;
     }
     if (monthInput < 1 || monthInput > 12) {
       out.textContent = "Month must be between 1 and 12.";
+      out.style.color = "#b91c1c";
       return;
     }
     const monthIndex = monthInput - 1;
     const bill = calculateMonthlyBill(roll, year, monthIndex);
     if (bill instanceof Error) {
       out.textContent = bill.message;
+      out.style.color = "#b91c1c";
       return;
     }
     const label = formatMonthYear(year, monthIndex);
+    out.style.color = "#374151";
     out.innerHTML = `
       <div style="margin-bottom:10px;">
         <strong>Bill for:</strong> ${bill.studentName} (${label})
       </div>
 
-      <table class="table billing-table">
-        <thead>
-          <tr>
-            <th>Meal</th>
-            <th>Count</th>
-            <th>Price</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Breakfast</td>
-            <td>${bill.counts.breakfast}</td>
-            <td>${formatCurrency(bill.prices.breakfast)}</td>
-            <td>${formatCurrency(bill.breakdown.breakfast)}</td>
-          </tr>
-          <tr>
-            <td>Lunch</td>
-            <td>${bill.counts.lunch}</td>
-            <td>${formatCurrency(bill.prices.lunch)}</td>
-            <td>${formatCurrency(bill.breakdown.lunch)}</td>
-          </tr>
-          <tr>
-            <td>Dinner</td>
-            <td>${bill.counts.dinner}</td>
-            <td>${formatCurrency(bill.prices.dinner)}</td>
-            <td>${formatCurrency(bill.breakdown.dinner)}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-wrapper" style="max-height:none;">
+        <table class="billing-table">
+          <thead>
+            <tr>
+              <th>Meal</th>
+              <th>Count</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Breakfast</td>
+              <td>${bill.counts.breakfast}</td>
+              <td>${formatCurrency(bill.prices.breakfast)}</td>
+              <td>${formatCurrency(bill.breakdown.breakfast)}</td>
+            </tr>
+            <tr>
+              <td>Lunch</td>
+              <td>${bill.counts.lunch}</td>
+              <td>${formatCurrency(bill.prices.lunch)}</td>
+              <td>${formatCurrency(bill.breakdown.lunch)}</td>
+            </tr>
+            <tr>
+              <td>Dinner</td>
+              <td>${bill.counts.dinner}</td>
+              <td>${formatCurrency(bill.prices.dinner)}</td>
+              <td>${formatCurrency(bill.breakdown.dinner)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <div style="margin-top:12px; font-size:16px;">
+      <div style="margin-top:12px; font-size:1.05rem;">
         <strong>Total:</strong> ${formatCurrency(bill.total)}
       </div>
     `;
@@ -1079,12 +1084,12 @@ function initAdminPanel() {
   qs("#btn-import-backup").addEventListener("click", () => {
     const fileInput = qs("#backup-file");
     const msg = qs("#backup-message");
-    msg.style.color = "#039c55ff";
+    msg.style.color = "#1f2937";
     msg.textContent = "";
     const file = fileInput.files && fileInput.files[0];
     if (!file) {
       msg.textContent = "Please select a backup JSON file.";
-      msg.style.color = "#f20303";
+      msg.style.color = "#b91c1c";
       return;
     }
     const reader = new FileReader();
@@ -1093,7 +1098,7 @@ function initAdminPanel() {
         const data = JSON.parse(reader.result);
         const res = importAllData(data);
         msg.textContent = res.message || "Import done";
-        msg.style.color = res.ok ? "#16a34a" : "#f20303";
+        msg.style.color = res.ok ? "#15803d" : "#b91c1c";
         if (res.ok) {
           renderStudentsTable();
           populateBillingStudentSelect();
@@ -1101,7 +1106,7 @@ function initAdminPanel() {
         }
       } catch (e) {
         msg.textContent = "Invalid JSON file";
-        msg.style.color = "#f20303";
+        msg.style.color = "#b91c1c";
       }
     };
     reader.readAsText(file);
@@ -1123,6 +1128,7 @@ function initAdminAuth() {
       logoutBtn.style.display = "inline-block";
       passGroup.style.display = "none";
       msgSpan.textContent = "Logged in as admin.";
+      msgSpan.style.color = "#15803d";
     } else {
       adminContent.style.display = "none";
       loginBtn.style.display = "inline-block";
@@ -1136,6 +1142,7 @@ function initAdminAuth() {
     const password = passInput.value;
     const res = loginAdmin(password);
     msgSpan.textContent = res.message;
+    msgSpan.style.color = res.ok ? "#15803d" : "#b91c1c";
     if (res.ok) {
       refreshAdminUI();
     }
