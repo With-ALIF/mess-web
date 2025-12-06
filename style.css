@@ -1,4 +1,3 @@
-/* RESET & BASE ---------------------------------- */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -12,7 +11,6 @@ body {
   min-height: 100vh;
 }
 
-/* ROOT CONTAINER -------------------------------- */
 .root {
   max-width: 1100px;
   margin: 24px auto;
@@ -27,7 +25,6 @@ body {
   border-top: 4px solid #2C4B9B;
 }
 
-/* HEADER & TABS --------------------------------- */
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -54,13 +51,12 @@ body {
   background: #e5e7eb;
   border-radius: 999px;
   padding: 4px;
-  width: fit-content;     
+  width: fit-content;
 }
-
 
 .tab-btn {
   border: none;
-   margin: 0 2px;
+  margin: 0 2px;
   padding: 8px 18px;
   border-radius: 999px;
   font-size: 0.9rem;
@@ -81,7 +77,6 @@ body {
   box-shadow: 0 4px 10px rgba(44, 75, 155, 0.35);
 }
 
-/* LAYOUT & CARDS -------------------------------- */
 .layout {
   display: grid;
   grid-template-columns: 1.1fr 1.2fr;
@@ -116,7 +111,6 @@ body {
   color: #6b7280;
 }
 
-/* FORMS ----------------------------------------- */
 .form-group {
   margin-bottom: 10px;
 }
@@ -147,7 +141,6 @@ body {
   background: #f9fbff;
 }
 
-/* GRID ROWS ------------------------------------- */
 .row {
   display: flex;
   gap: 8px;
@@ -157,7 +150,6 @@ body {
   flex: 1;
 }
 
-/* BUTTONS --------------------------------------- */
 .btn {
   border: none;
   border-radius: 999px;
@@ -191,7 +183,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background:  #d1d5db;
+  background: #d1d5db;
 }
 
 .btn-danger {
@@ -207,7 +199,6 @@ body {
   margin-left: 4px;
 }
 
-/* BADGES ---------------------------------------- */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -233,7 +224,6 @@ body {
   color: #b91c1c;
 }
 
-/* TABLE ----------------------------------------- */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -254,7 +244,6 @@ body {
   color: #1f2933;
 }
 
-/* TEXT HELPERS ---------------------------------- */
 .muted {
   font-size: 0.8rem;
   color: #6b7280;
@@ -263,60 +252,6 @@ body {
 .section-spacer {
   height: 10px;
 }
-
-/* RESPONSIVE ------------------------------------ */
-@media (max-width: 900px) {
-  .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .tabs {
-    align-self: stretch;
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 768px) {
-  .root {
-    padding: 12px;
-    margin: 16px auto;
-  }
-
-  .app-card {
-    padding: 16px 14px;
-  }
-
-  .layout {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .app-title {
-    font-size: 1.3rem;
-  }
-
-  .tab-btn {
-    font-size: 0.8rem;
-    padding: 7px 12px;
-  }
-
-  .card {
-    padding: 12px 12px;
-  }
-
-  .btn {
-    width: 100%;
-    margin-top: 4px;
-  }
-
-  .row {
-    flex-direction: column;
-  }
-}
-
 
 .billing-table {
   width: 100%;
@@ -341,4 +276,58 @@ body {
 
 .billing-table tr:last-child td {
   border-bottom: none;
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tabs {
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .root {
+    padding: 12px;
+    margin: 16px auto;
+    max-width: 100%;
+  }
+  .app-card {
+    padding: 16px 14px;
+  }
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 16px;
+  }
+  .app-title {
+    font-size: 1.5rem;
+  }
+  .card-title {
+    font-size: 1.05rem;
+  }
+  .form-label,
+  .form-input,
+  .form-select,
+  .btn,
+  .badge,
+  .muted {
+    font-size: 0.95rem;
+  }
+  .btn {
+    width: 100%;
+    margin-top: 4px;
+    padding: 9px 14px;
+  }
+  .row {
+    flex-direction: column;
+  }
 }
