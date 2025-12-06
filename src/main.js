@@ -15,7 +15,13 @@ import {
   deleteStudent
 } from "./student.js";
 import { bookMeal, cancelMeal, getBookingForDate } from "./meal.js";
-import { calculateMonthlyBill, formatMonthYear } from "./billing.js";
+import {
+  calculateMonthlyBill,
+  formatMonthYear,
+  getDailyMealsReport,
+  getMonthlyMealsReport,
+  getRangeMealsReport
+} from "./billing.js";
 import {
   isAdminLoggedIn,
   loginAdmin,
@@ -36,6 +42,23 @@ function formatCurrency(x) {
 function capitalize(s) {
   if (!s) return "";
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function parseDateInputValue(value) {
+  if (!value) return null;
+  return new Date(value + "T00:00:00");
+}
+
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+function getSelectedBookingDate() {
+  const inp = document.querySelector("#booking-date");
+  if (!inp || !inp.value) return new Date();
+  return parseDateInputValue(inp.value);
 }
 
 let currentEditingRoll = null;
@@ -92,10 +115,14 @@ function renderAppShell() {
               <div class="card">
                 <div class="card-header">
                   <div>
-                    <div class="card-title">Today's Menu & Booking</div>
-                    <div class="card-subtitle">Book / cancel meals</div>
+                    <div class="card-title">Menu & Booking</div>
+                    <div class="card-subtitle">Book / cancel meals for a date</div>
                   </div>
-                  <span id="today-label" class="badge"></span>
+                  <div>
+                    <div class="muted" style="font-size:12px; text-align:right;">Select Date</div>
+                    <input id="booking-date" type="date" class="form-input" style="max-width:150px;" />
+                    <div id="today-label" class="badge" style="margin-top:4px;"></div>
+                  </div>
                 </div>
 
                 <div id="today-menu" class="muted"></div>
@@ -129,6 +156,42 @@ function renderAppShell() {
 
                 <div class="form-group">
                   <span id="booking-message" class="muted"></span>
+                </div>
+              </div>
+
+              <div class="section-spacer"></div>
+
+              <div class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">Bulk Booking</div>
+                    <div class="card-subtitle">Next days booking / cancel</div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Start Date</label>
+                  <input id="bulk-start" type="date" class="form-input" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Days</label>
+                  <input id="bulk-days" type="number" class="form-input" value="7" min="1" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Meals</label>
+                  <div class="row">
+                    <label><input type="checkbox" id="bulk-bf" checked /> Breakfast</label>
+                    <label><input type="checkbox" id="bulk-lunch" checked /> Lunch</label>
+                    <label><input type="checkbox" id="bulk-dinner" checked /> Dinner</label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <button class="btn btn-primary" id="btn-bulk-book">Bulk Book</button>
+                  <button class="btn btn-secondary" id="btn-bulk-cancel">Bulk Cancel</button>
+                  <span id="bulk-message" class="muted"></span>
                 </div>
               </div>
             </div>
@@ -171,14 +234,11 @@ function renderAppShell() {
 function initTabs() {
   const buttons = document.querySelectorAll(".tab-btn");
   const panels = document.querySelectorAll(".tab-panel");
-
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
       const target = btn.dataset.tab;
-
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-
       panels.forEach((p) => {
         p.style.display = p.dataset.panel === target ? "block" : "none";
       });
@@ -199,18 +259,16 @@ function renderTodayMenu() {
 function updateBookingStatus() {
   const roll = qs("#stu-roll").value.trim();
   const statusDiv = qs("#booking-status");
-
   if (!roll) {
     statusDiv.textContent = "Enter roll & load profile.";
     return;
   }
-
-  const booking = getBookingForDate(roll);
+  const date = getSelectedBookingDate();
+  const booking = getBookingForDate(roll, date);
   if (!booking) {
-    statusDiv.innerHTML = `<span class="badge badge-warning">No meals booked today.</span>`;
+    statusDiv.innerHTML = `<span class="badge badge-warning">No meals booked for this date.</span>`;
     return;
   }
-
   const statuses = [
     ["Breakfast", booking.breakfast],
     ["Lunch", booking.lunch],
@@ -223,26 +281,22 @@ function updateBookingStatus() {
         </span>`
     )
     .join(" ");
-
   statusDiv.innerHTML = statuses;
 }
 
 function handleBookingAction(action, mealType) {
   const roll = qs("#stu-roll").value.trim();
   const msg = qs("#booking-message");
-
   msg.style.color = "#6b7280";
   msg.textContent = "";
-
   if (!roll) {
     msg.textContent = "Please enter your roll number first.";
     msg.style.color = "red";
     return;
   }
-
+  const date = getSelectedBookingDate();
   const result =
-    action === "book" ? bookMeal(roll, mealType) : cancelMeal(roll, mealType);
-
+    action === "book" ? bookMeal(roll, mealType, date) : cancelMeal(roll, mealType, date);
   if (result instanceof Error) {
     msg.textContent = result.message || "Something went wrong.";
     msg.style.color = "red";
@@ -263,27 +317,100 @@ function handleBookingAction(action, mealType) {
       msg.style.color = "red";
     }
   }
-
   updateBookingStatus();
+}
+
+function initBulkBooking() {
+  const bulkMsg = qs("#bulk-message");
+  function doBulk(action) {
+    const roll = qs("#stu-roll").value.trim();
+    if (!roll) {
+      bulkMsg.textContent = "আগে Roll দিয়ে প্রোফাইল লোড করুন।";
+      bulkMsg.style.color = "red";
+      return;
+    }
+    const startStr = qs("#bulk-start").value;
+    const days = Number(qs("#bulk-days").value || 0);
+    if (!startStr || days <= 0) {
+      bulkMsg.textContent = "Valid শুরু তারিখ ও দিনের সংখ্যা দিন।";
+      bulkMsg.style.color = "red";
+      return;
+    }
+    const bf = qs("#bulk-bf").checked;
+    const ln = qs("#bulk-lunch").checked;
+    const dn = qs("#bulk-dinner").checked;
+    if (!bf && !ln && !dn) {
+      bulkMsg.textContent = "কমপক্ষে একটি মিল নির্বাচন করুন।";
+      bulkMsg.style.color = "red";
+      return;
+    }
+    const startDate = parseDateInputValue(startStr);
+    let successCount = 0;
+    for (let i = 0; i < days; i++) {
+      const d = addDays(startDate, i);
+      if (bf) {
+        if (action === "book") {
+          bookMeal(roll, MealType.Breakfast, d);
+        } else {
+          cancelMeal(roll, MealType.Breakfast, d);
+        }
+      }
+      if (ln) {
+        if (action === "book") {
+          bookMeal(roll, MealType.Lunch, d);
+        } else {
+          cancelMeal(roll, MealType.Lunch, d);
+        }
+      }
+      if (dn) {
+        if (action === "book") {
+          bookMeal(roll, MealType.Dinner, d);
+        } else {
+          cancelMeal(roll, MealType.Dinner, d);
+        }
+      }
+      successCount++;
+    }
+    bulkMsg.textContent =
+      successCount +
+      " দিনের জন্য " +
+      (action === "book" ? "বুক" : "ক্যান্সেল") +
+      " করা হয়েছে।";
+    bulkMsg.style.color = "#16a34a";
+    updateBookingStatus();
+  }
+  qs("#btn-bulk-book").addEventListener("click", () => doBulk("book"));
+  qs("#btn-bulk-cancel").addEventListener("click", () => doBulk("cancel"));
 }
 
 function initStudentPanel() {
   const today = new Date();
-  qs("#today-label").textContent = today.toLocaleDateString();
-
+  const todayStr = today.toISOString().slice(0, 10);
+  const todayLabel = qs("#today-label");
+  todayLabel.textContent = today.toLocaleDateString();
+  const dateInput = document.querySelector("#booking-date");
+  if (dateInput) {
+    dateInput.value = todayStr;
+    dateInput.addEventListener("change", () => {
+      updateBookingStatus();
+    });
+  }
+  const bulkStart = document.querySelector("#bulk-start");
+  if (bulkStart) {
+    bulkStart.value = todayStr;
+  }
   renderTodayMenu();
-
   qs("#btn-stu-load").addEventListener("click", () => {
     const roll = qs("#stu-roll").value.trim();
     const msg = qs("#stu-message");
     const profileDiv = qs("#stu-profile-content");
     const balanceBadge = qs("#stu-balance-badge");
-
     if (!roll) {
       msg.textContent = "Enter roll number.";
+      profileDiv.textContent = "No profile loaded.";
+      balanceBadge.textContent = "";
       return;
     }
-
     const student = findStudent(roll);
     if (!student) {
       msg.textContent = "Student not found.";
@@ -291,20 +418,16 @@ function initStudentPanel() {
       balanceBadge.textContent = "";
       return;
     }
-
     msg.textContent = "";
     profileDiv.innerHTML = `
       <div><strong>${student.name}</strong> (${student.rollNo})</div>
       <div>Room: ${student.roomNumber}</div>
     `;
-
     balanceBadge.textContent = `Balance: ${formatCurrency(
       student.currentBalance
     )}`;
-
     updateBookingStatus();
   });
-
   document.querySelectorAll("[data-book]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const meal = btn.dataset.book;
@@ -312,7 +435,6 @@ function initStudentPanel() {
       handleBookingAction("book", MealType[key]);
     });
   });
-
   document.querySelectorAll("[data-cancel]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const meal = btn.dataset.cancel;
@@ -320,17 +442,16 @@ function initStudentPanel() {
       handleBookingAction("cancel", MealType[key]);
     });
   });
+  initBulkBooking();
 }
 
 function renderStudentsTable() {
   const tbody = qs("#students-tbody");
   const students = listStudents();
-
   if (!students.length) {
     tbody.innerHTML = `<tr><td colspan="5" class="muted">No students registered yet.</td></tr>`;
     return;
   }
-
   tbody.innerHTML = students
     .map(
       (s) => `
@@ -352,13 +473,11 @@ function renderStudentsTable() {
 function populateBillingStudentSelect() {
   const sel = qs("#bill-roll");
   const students = listStudents();
-
   sel.innerHTML = "";
   if (!students.length) {
     sel.innerHTML = `<option value="">No students</option>`;
     return;
   }
-
   students.forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s.rollNo;
@@ -371,7 +490,6 @@ function renderAdminContent() {
   const adminContent = qs("#admin-content");
   const prices = getPrices();
   const menu = getMenu();
-
   adminContent.innerHTML = `
     <div class="layout">
       <div>
@@ -536,6 +654,51 @@ function renderAdminContent() {
           </div>
           <div id="bill-result" class="muted"></div>
         </div>
+
+        <div class="section-spacer"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Meal Report</div>
+              <div class="card-subtitle">Daily / Monthly / Custom Range</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Report Type</label>
+            <select id="rep-type" class="form-input">
+              <option value="daily">Daily</option>
+              <option value="monthly">Monthly</option>
+              <option value="range">Custom Range</option>
+            </select>
+          </div>
+
+          <div class="form-group rep-field rep-daily">
+            <label class="form-label">Date</label>
+            <input id="rep-date" type="date" class="form-input" />
+          </div>
+
+          <div class="form-group rep-field rep-monthly" style="display:none;">
+            <label class="form-label">Month</label>
+            <input id="rep-month" type="number" class="form-input" min="1" max="12" />
+            <label class="form-label">Year</label>
+            <input id="rep-year" type="number" class="form-input" />
+          </div>
+
+          <div class="form-group rep-field rep-range" style="display:none;">
+            <label class="form-label">From</label>
+            <input id="rep-from" type="date" class="form-input" />
+            <label class="form-label">To</label>
+            <input id="rep-to" type="date" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary" id="btn-show-report">Show Report</button>
+          </div>
+
+          <div id="rep-result" class="muted"></div>
+        </div>
       </div>
     </div>
   `;
@@ -545,10 +708,8 @@ function setupStudentsTableActions() {
   const tbody = qs("#students-tbody");
   const regMsg = qs("#reg-message");
   const regBtn = qs("#btn-register-student");
-
   tbody.addEventListener("click", (e) => {
     const target = e.target;
-
     if (target.matches("[data-edit-roll]")) {
       const roll = target.dataset.editRoll;
       const student = findStudent(roll);
@@ -557,29 +718,24 @@ function setupStudentsTableActions() {
         regMsg.style.color = "red";
         return;
       }
-
       qs("#reg-name").value = student.name;
       qs("#reg-roll").value = student.rollNo;
       qs("#reg-room").value = student.roomNumber;
       qs("#reg-balance").value = student.currentBalance;
-
       currentEditingRoll = student.rollNo;
       regBtn.textContent = "Update Student";
       regMsg.textContent = `Editing student ${student.rollNo}.`;
       regMsg.style.color = "#374151";
     }
-
     if (target.matches("[data-delete-roll]")) {
       const roll = target.dataset.deleteRoll;
       const sure = window.confirm(
         `Are you sure you want to delete student ${roll}?`
       );
       if (!sure) return;
-
       const res = deleteStudent(roll);
       regMsg.textContent = res.message;
       regMsg.style.color = res.ok ? "green" : "red";
-
       if (currentEditingRoll === roll) {
         currentEditingRoll = null;
         regBtn.textContent = "Register";
@@ -588,9 +744,179 @@ function setupStudentsTableActions() {
         qs("#reg-room").value = "";
         qs("#reg-balance").value = "0";
       }
-
       renderStudentsTable();
       populateBillingStudentSelect();
+    }
+  });
+}
+
+function renderMealsReport(report) {
+  const container = qs("#rep-result");
+  if (!report) {
+    container.textContent = "No data found.";
+    return;
+  }
+  if (report instanceof Error || report.error) {
+    container.textContent =
+      report.message || "Could not load report data.";
+    return;
+  }
+  const title = report.title || report.label || "";
+  const summary = report.summary || {};
+  const list = report.byStudent || [];
+  if (!list.length) {
+    container.innerHTML = title
+      ? `<div><strong>${title}</strong></div><div>No data found.</div>`
+      : "No data found.";
+    return;
+  }
+  const summaryHtml = `
+    <div style="margin-bottom:10px;">
+      <strong>${title}</strong>
+    </div>
+    <div style="margin-bottom:10px;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Meal</th>
+            <th>Count</th>
+            <th>Total Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Breakfast</td>
+            <td>${summary.breakfastCount || 0}</td>
+            <td>${formatCurrency(summary.breakfastTotal || 0)}</td>
+          </tr>
+          <tr>
+            <td>Lunch</td>
+            <td>${summary.lunchCount || 0}</td>
+            <td>${formatCurrency(summary.lunchTotal || 0)}</td>
+          </tr>
+          <tr>
+            <td>Dinner</td>
+            <td>${summary.dinnerCount || 0}</td>
+            <td>${formatCurrency(summary.dinnerTotal || 0)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+  const detailsHtml = `
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Roll</th>
+            <th>Name</th>
+            <th>Breakfast</th>
+            <th>Lunch</th>
+            <th>Dinner</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list
+            .map(
+              (s) => `
+            <tr>
+              <td>${s.rollNo}</td>
+              <td>${s.name}</td>
+              <td>${s.breakfast || 0}</td>
+              <td>${s.lunch || 0}</td>
+              <td>${s.dinner || 0}</td>
+              <td>${formatCurrency(s.total || 0)}</td>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;">
+      <strong>Grand Total: </strong>${formatCurrency(summary.grandTotal || 0)}
+    </div>
+  `;
+  container.innerHTML = summaryHtml + detailsHtml;
+}
+
+function initReports() {
+  const typeSel = qs("#rep-type");
+  const resultDiv = qs("#rep-result");
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const month = today.getMonth() + 1;
+  const year = today.getFullYear();
+  const dateInput = qs("#rep-date");
+  if (dateInput) dateInput.value = todayStr;
+  const monthInput = qs("#rep-month");
+  const yearInput = qs("#rep-year");
+  if (monthInput) monthInput.value = month;
+  if (yearInput) yearInput.value = year;
+  const fromInput = qs("#rep-from");
+  const toInput = qs("#rep-to");
+  if (fromInput && toInput) {
+    const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+      .toISOString()
+      .slice(0, 10);
+    fromInput.value = firstOfMonth;
+    toInput.value = todayStr;
+  }
+  function updateFields() {
+    const t = typeSel.value;
+    document.querySelectorAll(".rep-field").forEach((el) => {
+      el.style.display = "none";
+    });
+    if (t === "daily") {
+      const d = document.querySelector(".rep-daily");
+      if (d) d.style.display = "block";
+    } else if (t === "monthly") {
+      const d = document.querySelector(".rep-monthly");
+      if (d) d.style.display = "block";
+    } else {
+      const d = document.querySelector(".rep-range");
+      if (d) d.style.display = "block";
+    }
+    resultDiv.textContent = "";
+  }
+  typeSel.addEventListener("change", updateFields);
+  updateFields();
+  qs("#btn-show-report").addEventListener("click", () => {
+    const t = typeSel.value;
+    try {
+      let report;
+      if (t === "daily") {
+        const dStr = qs("#rep-date").value;
+        if (!dStr) {
+          resultDiv.textContent = "Please select a date.";
+          return;
+        }
+        const d = parseDateInputValue(dStr);
+        report = getDailyMealsReport(d);
+      } else if (t === "monthly") {
+        const m = Number(qs("#rep-month").value);
+        const y = Number(qs("#rep-year").value);
+        if (!m || !y || m < 1 || m > 12) {
+          resultDiv.textContent = "Enter valid month and year.";
+          return;
+        }
+        report = getMonthlyMealsReport(y, m - 1);
+      } else {
+        const fromStr = qs("#rep-from").value;
+        const toStr = qs("#rep-to").value;
+        if (!fromStr || !toStr) {
+          resultDiv.textContent = "Select both from and to dates.";
+          return;
+        }
+        const from = parseDateInputValue(fromStr);
+        const to = parseDateInputValue(toStr);
+        report = getRangeMealsReport(from, to);
+      }
+      renderMealsReport(report);
+    } catch (e) {
+      resultDiv.textContent =
+        (e && e.message) || "Could not generate report.";
     }
   });
 }
@@ -601,32 +927,26 @@ function initAdminPanel() {
     const ln = qs("#admin-menu-lunch").value.trim();
     const dn = qs("#admin-menu-dinner").value.trim();
     const msg = qs("#admin-menu-message");
-
     saveMenu({
       breakfast: bf || "Not set",
       lunch: ln || "Not set",
       dinner: dn || "Not set"
     });
-
     msg.textContent = "Menu saved.";
     renderTodayMenu();
   });
-
   qs("#btn-save-prices").addEventListener("click", () => {
     const bf = Number(qs("#admin-price-breakfast").value);
     const ln = Number(qs("#admin-price-lunch").value);
     const dn = Number(qs("#admin-price-dinner").value);
     const msg = qs("#admin-price-message");
-
     savePrices({
       breakfast: isNaN(bf) ? 0 : bf,
       lunch: isNaN(ln) ? 0 : ln,
       dinner: isNaN(dn) ? 0 : dn
     });
-
     msg.textContent = "Prices saved.";
   });
-
   qs("#btn-register-student").addEventListener("click", () => {
     const name = qs("#reg-name").value.trim();
     const roll = qs("#reg-roll").value.trim();
@@ -634,15 +954,12 @@ function initAdminPanel() {
     const balance = qs("#reg-balance").value.trim();
     const msg = qs("#reg-message");
     const btn = qs("#btn-register-student");
-
     msg.style.color = "#374151";
-
     if (!name || !roll || !room) {
       msg.textContent = "Name, roll and room are required.";
       msg.style.color = "red";
       return;
     }
-
     if (currentEditingRoll) {
       const existing = findStudent(currentEditingRoll);
       if (!existing) {
@@ -650,7 +967,6 @@ function initAdminPanel() {
         msg.style.color = "red";
         return;
       }
-
       const updatedStudent = {
         ...existing,
         rollNo: roll,
@@ -658,65 +974,51 @@ function initAdminPanel() {
         roomNumber: room,
         currentBalance: Number(balance) || 0
       };
-
       const res = updateStudent(updatedStudent);
       msg.textContent = res.message || "Student updated.";
       msg.style.color = res.ok ? "green" : "red";
-
       currentEditingRoll = null;
       btn.textContent = "Register";
     } else {
       const res = registerStudent(roll, name, room, balance);
-
       if (res instanceof Error || res.ok === false) {
         msg.textContent = res.message || "Could not register student.";
         msg.style.color = "red";
         return;
       }
-
       msg.textContent = res.message || "Student registered successfully.";
       msg.style.color = "green";
     }
-
     qs("#reg-name").value = "";
     qs("#reg-roll").value = "";
     qs("#reg-room").value = "";
     qs("#reg-balance").value = "0";
-
     renderStudentsTable();
     populateBillingStudentSelect();
   });
-
   renderStudentsTable();
   populateBillingStudentSelect();
   setupStudentsTableActions();
-
   qs("#btn-calc-bill").addEventListener("click", () => {
     const roll = qs("#bill-roll").value;
     const monthInput = Number(qs("#bill-month").value);
     const year = Number(qs("#bill-year").value);
     const out = qs("#bill-result");
-
     if (!roll || isNaN(monthInput) || isNaN(year)) {
       out.textContent = "Select student and enter valid month/year.";
       return;
     }
-
     if (monthInput < 1 || monthInput > 12) {
       out.textContent = "Month must be between 1 and 12.";
       return;
     }
-
     const monthIndex = monthInput - 1;
     const bill = calculateMonthlyBill(roll, year, monthIndex);
-
     if (bill instanceof Error) {
       out.textContent = bill.message;
       return;
     }
-
     const label = formatMonthYear(year, monthIndex);
-
     out.innerHTML = `
       <div style="margin-bottom:10px;">
         <strong>Bill for:</strong> ${bill.studentName} (${label})
@@ -758,62 +1060,51 @@ function initAdminPanel() {
       </div>
     `;
   });
-
   qs("#btn-export-backup").addEventListener("click", () => {
     const backup = exportAllData();
     const json = JSON.stringify(backup, null, 2);
-
     const blob = new Blob([json], {
       type: "application/json"
     });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     const today = new Date().toISOString().slice(0, 10);
     a.download = `mess-backup-${today}.json`;
     a.click();
-
     URL.revokeObjectURL(url);
   });
-
   qs("#btn-import-backup").addEventListener("click", () => {
     const fileInput = qs("#backup-file");
     const msg = qs("#backup-message");
-
     msg.style.color = "#039c55ff";
     msg.textContent = "";
-
     const file = fileInput.files && fileInput.files[0];
     if (!file) {
       msg.textContent = "Please select a backup JSON file.";
       msg.style.color = "#f20303";
       return;
     }
-
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
         const res = importAllData(data);
-
         msg.textContent = res.message || "Import done";
         msg.style.color = res.ok ? "#16a34a" : "#f20303";
-
         if (res.ok) {
           renderStudentsTable();
           populateBillingStudentSelect();
           renderTodayMenu();
         }
       } catch (e) {
-        console.error(e);
         msg.textContent = "Invalid JSON file";
         msg.style.color = "#f20303";
       }
     };
-
     reader.readAsText(file);
   });
+  initReports();
 }
 
 function initAdminAuth() {
@@ -823,7 +1114,6 @@ function initAdminAuth() {
   const msgSpan = qs("#admin-login-message");
   const passInput = qs("#admin-pass");
   const passGroup = qs("#admin-pass-group");
-
   function refreshAdminUI() {
     if (isAdminLoggedIn()) {
       adminContent.style.display = "block";
@@ -840,7 +1130,6 @@ function initAdminAuth() {
       passInput.value = "";
     }
   }
-
   loginBtn.addEventListener("click", () => {
     const password = passInput.value;
     const res = loginAdmin(password);
@@ -849,12 +1138,10 @@ function initAdminAuth() {
       refreshAdminUI();
     }
   });
-
   logoutBtn.addEventListener("click", () => {
     logoutAdmin();
     refreshAdminUI();
   });
-
   renderAdminContent();
   initAdminPanel();
   refreshAdminUI();
