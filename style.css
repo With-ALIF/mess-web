@@ -191,7 +191,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background: #d1d5db;
+  background:  #d1d5db;
 }
 
 .btn-danger {
@@ -315,4 +315,30 @@ body {
   .row {
     flex-direction: column;
   }
+}
+
+
+.billing-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.billing-table th,
+.billing-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.billing-table th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.billing-table tr:last-child td {
+  border-bottom: none;
 }
