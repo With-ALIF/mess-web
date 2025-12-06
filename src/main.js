@@ -545,33 +545,7 @@ function renderAdminContent() {
           </div>
         </div>
 
-        <div class="section-spacer"></div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h3 class="card-title">Data Backup & Restore</h3>
-              <p class="card-subtitle">JSON Backup</p>
-            </div>
-          </div>
-
-          <div class="card-body">
-            <div class="form-group">
-              <button class="btn btn-primary" id="btn-export-backup">Download JSON</button>
-            </div>
-
-            <div class="form-group">
-              <label for="backup-file" class="form-label">Import JSON</label>
-              <input type="file" id="backup-file" class="form-input" accept="application/json" />
-            </div>
-
-            <div class="form-group">
-              <button class="btn btn-secondary" id="btn-import-backup">Import Backup</button>
-              <span id="backup-message" class="muted"></span>
-            </div>
-          </div>
-        </div>
-      </div>
+       
 
       <div>
         <div class="card">
@@ -701,6 +675,34 @@ function renderAdminContent() {
         </div>
       </div>
     </div>
+
+     <div class="section-spacer"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Data Backup & Restore</h3>
+              <p class="card-subtitle">JSON Backup</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="form-group">
+              <button class="btn btn-primary" id="btn-export-backup">Download JSON</button>
+            </div>
+
+            <div class="form-group">
+              <label for="backup-file" class="form-label">Import JSON</label>
+              <input type="file" id="backup-file" class="form-input" accept="application/json" />
+            </div>
+
+            <div class="form-group">
+              <button class="btn btn-secondary" id="btn-import-backup">Import Backup</button>
+              <span id="backup-message" class="muted"></span>
+            </div>
+          </div>
+        </div>
+      </div>
   `;
 }
 
