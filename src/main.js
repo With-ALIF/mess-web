@@ -326,14 +326,14 @@ function initBulkBooking() {
   function doBulk(action) {
     const roll = qs("#stu-roll").value.trim();
     if (!roll) {
-      bulkMsg.textContent = "আগে Roll দিয়ে প্রোফাইল লোড করুন।";
+      bulkMsg.textContent = "Load profile with roll number first.";
       bulkMsg.style.color = "#b91c1c";
       return;
     }
     const startStr = qs("#bulk-start").value;
     const days = Number(qs("#bulk-days").value || 0);
     if (!startStr || days <= 0) {
-      bulkMsg.textContent = "Valid শুরু তারিখ ও দিনের সংখ্যা দিন।";
+      bulkMsg.textContent = "Enter a valid start date and number of days.";
       bulkMsg.style.color = "#b91c1c";
       return;
     }
@@ -341,7 +341,7 @@ function initBulkBooking() {
     const ln = qs("#bulk-lunch").checked;
     const dn = qs("#bulk-dinner").checked;
     if (!bf && !ln && !dn) {
-      bulkMsg.textContent = "কমপক্ষে একটি মিল নির্বাচন করুন।";
+      bulkMsg.textContent = "Select at least one meal.";
       bulkMsg.style.color = "#b91c1c";
       return;
     }
@@ -374,9 +374,8 @@ function initBulkBooking() {
     }
     bulkMsg.textContent =
       successCount +
-      " দিনের জন্য " +
-      (action === "book" ? "বুক" : "ক্যান্সেল") +
-      " করা হয়েছে।";
+      " days " +
+      (action === "book" ? "booked." : "cancelled.");
     bulkMsg.style.color = "#15803d";
     updateBookingStatus();
   }
@@ -401,11 +400,14 @@ function initStudentPanel() {
     bulkStart.value = todayStr;
   }
   renderTodayMenu();
-  qs("#btn-stu-load").addEventListener("click", () => {
-    const roll = qs("#stu-roll").value.trim();
-    const msg = qs("#stu-message");
-    const profileDiv = qs("#stu-profile-content");
-    const balanceBadge = qs("#stu-balance-badge");
+
+  const rollInput = qs("#stu-roll");
+  const msg = qs("#stu-message");
+  const profileDiv = qs("#stu-profile-content");
+  const balanceBadge = qs("#stu-balance-badge");
+
+  function loadStudentProfile() {
+    const roll = rollInput.value.trim();
     if (!roll) {
       msg.textContent = "Enter roll number.";
       profileDiv.textContent = "No profile loaded.";
@@ -424,11 +426,20 @@ function initStudentPanel() {
       <div><strong>${student.name}</strong> (${student.rollNo})</div>
       <div>Room: ${student.roomNumber}</div>
     `;
-    balanceBadge.textContent = `Balance: ${formatCurrency(
+    balanceBadge.textContent = `Remaining Balance: ${formatCurrency(
       student.currentBalance
     )}`;
     updateBookingStatus();
+  }
+
+  qs("#btn-stu-load").addEventListener("click", loadStudentProfile);
+
+  rollInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      loadStudentProfile();
+    }
   });
+
   document.querySelectorAll("[data-book]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const meal = btn.dataset.book;
@@ -1023,6 +1034,26 @@ function initAdminPanel() {
       return;
     }
     const label = formatMonthYear(year, monthIndex);
+    const student = findStudent(roll);
+    const currentBalance = student ? Number(student.currentBalance || 0) : 0;
+    const remainingBalance = currentBalance - bill.total;
+    if (student) {
+      const updatedStudent = {
+        ...student,
+        currentBalance: remainingBalance
+      };
+      updateStudent(updatedStudent);
+    }
+    renderStudentsTable();
+    populateBillingStudentSelect();
+    const stuRollInput = document.querySelector("#stu-roll");
+    if (stuRollInput && stuRollInput.value.trim() === roll) {
+      const balanceBadge = document.querySelector("#stu-balance-badge");
+      if (balanceBadge) {
+        balanceBadge.textContent =
+          `Remaining Balance: ${formatCurrency(remainingBalance)}`;
+      }
+    }
     out.style.color = "#374151";
     out.innerHTML = `
       <div style="margin-bottom:10px;">
@@ -1032,9 +1063,9 @@ function initAdminPanel() {
       <div class="table-wrapper" style="max-height:none;">
         <table class="billing-table">
           <thead>
-            <tr>
+            <tr style="color: green">
               <th>Meal</th>
-              <th>Count</th>
+              <th>Count</h>
               <th>Price</th>
               <th>Total</th>
             </tr>
@@ -1065,6 +1096,12 @@ function initAdminPanel() {
       <div style="margin-top:12px; font-size:1.05rem;">
         <strong>Total:</strong> ${formatCurrency(bill.total)}
       </div>
+      <div style="margin-top:4px;">
+        <strong>Previous Balance:</strong> ${formatCurrency(currentBalance)}
+      </div>
+      <div style="margin-top:4px;">
+        <strong>Remaining Balance:</strong> ${formatCurrency(remainingBalance)}
+      </div>
     `;
   });
   qs("#btn-export-backup").addEventListener("click", () => {
@@ -1074,9 +1111,9 @@ function initAdminPanel() {
       type: "application/json"
     });
     const url = URL.createObjectURL(blob);
+    const today = new Date().toISOString().slice(0, 10);
     const a = document.createElement("a");
     a.href = url;
-    const today = new Date().toISOString().slice(0, 10);
     a.download = `mess-backup-${today}.json`;
     a.click();
     URL.revokeObjectURL(url);
