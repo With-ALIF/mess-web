@@ -734,23 +734,50 @@ function initAdminPanel() {
       return;
     }
 
-    const label = formatMonthYear(year, monthIndex);
+   const label = formatMonthYear(year, monthIndex);
 
-    out.innerHTML = `
-      <div><strong>Bill for:</strong> ${roll} (${label})</div>
-      <div>Breakfast: ${bill.counts.breakfast} × ${formatCurrency(
-        bill.prices.breakfast
-      )} = ${formatCurrency(bill.breakdown.breakfast)}</div>
-      <div>Lunch: ${bill.counts.lunch} × ${formatCurrency(
-        bill.prices.lunch
-      )} = ${formatCurrency(bill.breakdown.lunch)}</div>
-      <div>Dinner: ${bill.counts.dinner} × ${formatCurrency(
-        bill.prices.dinner
-      )} = ${formatCurrency(bill.breakdown.dinner)}</div>
-      <div style="margin-top:6px;"><strong>Total:</strong> ${formatCurrency(
-        bill.total
-      )}</div>
-    `;
+out.innerHTML = `
+  <div style="margin-bottom:10px;">
+    <strong>Bill for:</strong> ${bill.studentName} (${label})
+
+  </div>
+
+  <table class="table billing-table">
+    <thead>
+      <tr>
+        <th>Meal</th>
+        <th>Count</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Breakfast</td>
+        <td>${bill.counts.breakfast}</td>
+        <td>${formatCurrency(bill.prices.breakfast)}</td>
+        <td>${formatCurrency(bill.breakdown.breakfast)}</td>
+      </tr>
+      <tr>
+        <td>Lunch</td>
+        <td>${bill.counts.lunch}</td>
+        <td>${formatCurrency(bill.prices.lunch)}</td>
+        <td>${formatCurrency(bill.breakdown.lunch)}</td>
+      </tr>
+      <tr>
+        <td>Dinner</td>
+        <td>${bill.counts.dinner}</td>
+        <td>${formatCurrency(bill.prices.dinner)}</td>
+        <td>${formatCurrency(bill.breakdown.dinner)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:12px; font-size:16px;">
+    <strong>Total:</strong> ${formatCurrency(bill.total)}
+  </div>
+`;
+
   });
 }
 
