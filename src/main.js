@@ -1,7 +1,12 @@
-// main.js (updated)
-
 import { MealType } from "./models.js";
-import { getMenu, saveMenu, getPrices, savePrices } from "./storage.js";
+import {
+  getMenu,
+  saveMenu,
+  getPrices,
+  savePrices,
+  exportAllData,
+  importAllData
+} from "./storage.js";
 import {
   listStudents,
   registerStudent,
@@ -18,7 +23,6 @@ import {
   getAdminUsername
 } from "./auth.js";
 
-// -------- Helper --------
 function qs(selector) {
   const el = document.querySelector(selector);
   if (!el) throw new Error("Element not found: " + selector);
@@ -34,12 +38,8 @@ function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// এখন আমরা কোন student টা edit করছি সেটা ট্র্যাক করব
 let currentEditingRoll = null;
 
-/* ------------------------------------------------
-   RENDER APP UI (DEFAULT = STUDENT TAB ACTIVE)
------------------------------------------------- */
 function renderAppShell() {
   const root = qs(".root");
   root.innerHTML = `
@@ -48,8 +48,6 @@ function renderAppShell() {
         <div>
           <div class="app-title">Student Hall Mess Management</div>
         </div>
-
-        <!-- DEFAULT ACTIVE = STUDENT -->
         <div class="tabs">
           <button class="tab-btn active" data-tab="student">Student</button>
           <button class="tab-btn" data-tab="admin">Admin</button>
@@ -57,12 +55,9 @@ function renderAppShell() {
       </div>
 
       <div class="tabs-content">
-
-        <!-- ===== STUDENT PANEL (Visible by Default) ===== -->
         <div class="tab-panel" data-panel="student" style="display:block;">
           <div class="layout">
             <div>
-              <!-- Student Login -->
               <div class="card">
                 <div class="card-header">
                   <div>
@@ -81,7 +76,6 @@ function renderAppShell() {
 
               <div class="section-spacer"></div>
 
-              <!-- Student Profile -->
               <div class="card">
                 <div class="card-header">
                   <div>
@@ -95,7 +89,6 @@ function renderAppShell() {
             </div>
 
             <div>
-              <!-- Today's Menu & Booking -->
               <div class="card">
                 <div class="card-header">
                   <div>
@@ -142,7 +135,6 @@ function renderAppShell() {
           </div>
         </div>
 
-        <!-- ===== ADMIN PANEL (Hidden by Default) ===== -->
         <div class="tab-panel" data-panel="admin" style="display:none;">
           <div class="card" id="admin-login-card">
             <div class="card-header">
@@ -169,19 +161,13 @@ function renderAppShell() {
             </div>
           </div>
 
-          <div id="admin-content" style="display:none;">
-            <!-- Admin content will be rendered by JS -->
-          </div>
+          <div id="admin-content" style="display:none;"></div>
         </div>
-
       </div>
     </div>
   `;
 }
 
-/* ------------------------  
-   TAB SWITCHING
------------------------- */
 function initTabs() {
   const buttons = document.querySelectorAll(".tab-btn");
   const panels = document.querySelectorAll(".tab-panel");
@@ -200,9 +186,6 @@ function initTabs() {
   });
 }
 
-/* ------------------------
-   STUDENT PANEL FUNCTIONS
------------------------- */
 function renderTodayMenu() {
   const menuDiv = qs("#today-menu");
   const menu = getMenu();
@@ -248,28 +231,23 @@ function handleBookingAction(action, mealType) {
   const roll = qs("#stu-roll").value.trim();
   const msg = qs("#booking-message");
 
-  // Reset message display
   msg.style.color = "#6b7280";
   msg.textContent = "";
 
-  // No roll entered
   if (!roll) {
     msg.textContent = "Please enter your roll number first.";
     msg.style.color = "red";
     return;
   }
 
-  // Perform booking/cancellation
   const result =
     action === "book" ? bookMeal(roll, mealType) : cancelMeal(roll, mealType);
 
-  // If unexpected error
   if (result instanceof Error) {
     msg.textContent = result.message || "Something went wrong.";
     msg.style.color = "red";
   } else {
     if (result.ok) {
-      // ✅ Success message
       msg.textContent =
         result.message ||
         (action === "book"
@@ -277,7 +255,6 @@ function handleBookingAction(action, mealType) {
           : "Meal cancelled successfully.");
       msg.style.color = "green";
     } else {
-      // ❌ Failed (e.g., cancel time passed)
       msg.textContent =
         result.message ||
         (action === "cancel"
@@ -287,7 +264,6 @@ function handleBookingAction(action, mealType) {
     }
   }
 
-  // Refresh UI
   updateBookingStatus();
 }
 
@@ -329,11 +305,10 @@ function initStudentPanel() {
     updateBookingStatus();
   });
 
-  // Booking buttons
   document.querySelectorAll("[data-book]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const meal = btn.dataset.book;      // "breakfast" / "lunch" / "dinner"
-      const key = capitalize(meal);       // "Breakfast" / "Lunch" / "Dinner"
+      const meal = btn.dataset.book;
+      const key = capitalize(meal);
       handleBookingAction("book", MealType[key]);
     });
   });
@@ -347,9 +322,6 @@ function initStudentPanel() {
   });
 }
 
-/* ------------------------
-   ADMIN PANEL CONTENT
------------------------- */
 function renderStudentsTable() {
   const tbody = qs("#students-tbody");
   const students = listStudents();
@@ -403,7 +375,6 @@ function renderAdminContent() {
   adminContent.innerHTML = `
     <div class="layout">
       <div>
-        <!-- Menu Card -->
         <div class="card">
           <div class="card-header">
             <div>
@@ -431,7 +402,6 @@ function renderAdminContent() {
 
         <div class="section-spacer"></div>
 
-        <!-- Prices Card -->
         <div class="card">
           <div class="card-header">
             <div>
@@ -456,10 +426,36 @@ function renderAdminContent() {
             <span id="admin-price-message" class="muted"></span>
           </div>
         </div>
+
+        <div class="section-spacer"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Data Backup & Restore</h3>
+              <p class="card-subtitle">JSON Backup</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="form-group">
+              <button class="btn btn-primary" id="btn-export-backup">Download JSON</button>
+            </div>
+
+            <div class="form-group">
+              <label for="backup-file" class="form-label">Import JSON</label>
+              <input type="file" id="backup-file" class="form-input" accept="application/json" />
+            </div>
+
+            <div class="form-group">
+              <button class="btn btn-secondary" id="btn-import-backup">Import Backup</button>
+              <span id="backup-message" class="muted"></span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div>
-        <!-- Register / Edit Student -->
         <div class="card">
           <div class="card-header">
             <div>
@@ -491,7 +487,6 @@ function renderAdminContent() {
 
         <div class="section-spacer"></div>
 
-        <!-- Students Table -->
         <div class="card">
           <div class="card-header">
             <div>
@@ -517,7 +512,6 @@ function renderAdminContent() {
 
         <div class="section-spacer"></div>
 
-        <!-- Billing -->
         <div class="card">
           <div class="card-header">
             <div>
@@ -547,10 +541,6 @@ function renderAdminContent() {
   `;
 }
 
-/* ------------------------
-   ADMIN PANEL LOGIC
------------------------- */
-
 function setupStudentsTableActions() {
   const tbody = qs("#students-tbody");
   const regMsg = qs("#reg-message");
@@ -559,7 +549,6 @@ function setupStudentsTableActions() {
   tbody.addEventListener("click", (e) => {
     const target = e.target;
 
-    // EDIT
     if (target.matches("[data-edit-roll]")) {
       const roll = target.dataset.editRoll;
       const student = findStudent(roll);
@@ -580,7 +569,6 @@ function setupStudentsTableActions() {
       regMsg.style.color = "#374151";
     }
 
-    // DELETE
     if (target.matches("[data-delete-roll]")) {
       const roll = target.dataset.deleteRoll;
       const sure = window.confirm(
@@ -608,7 +596,6 @@ function setupStudentsTableActions() {
 }
 
 function initAdminPanel() {
-  // Save menu
   qs("#btn-save-menu").addEventListener("click", () => {
     const bf = qs("#admin-menu-breakfast").value.trim();
     const ln = qs("#admin-menu-lunch").value.trim();
@@ -622,10 +609,9 @@ function initAdminPanel() {
     });
 
     msg.textContent = "Menu saved.";
-    renderTodayMenu(); // student side update
+    renderTodayMenu();
   });
 
-  // Save prices
   qs("#btn-save-prices").addEventListener("click", () => {
     const bf = Number(qs("#admin-price-breakfast").value);
     const ln = Number(qs("#admin-price-lunch").value);
@@ -641,7 +627,6 @@ function initAdminPanel() {
     msg.textContent = "Prices saved.";
   });
 
-  // Register / Update student
   qs("#btn-register-student").addEventListener("click", () => {
     const name = qs("#reg-name").value.trim();
     const roll = qs("#reg-roll").value.trim();
@@ -659,7 +644,6 @@ function initAdminPanel() {
     }
 
     if (currentEditingRoll) {
-      // UPDATE
       const existing = findStudent(currentEditingRoll);
       if (!existing) {
         msg.textContent = "Original student not found for update.";
@@ -682,7 +666,6 @@ function initAdminPanel() {
       currentEditingRoll = null;
       btn.textContent = "Register";
     } else {
-      // NEW REGISTER
       const res = registerStudent(roll, name, room, balance);
 
       if (res instanceof Error || res.ok === false) {
@@ -695,7 +678,6 @@ function initAdminPanel() {
       msg.style.color = "green";
     }
 
-    // reset form
     qs("#reg-name").value = "";
     qs("#reg-roll").value = "";
     qs("#reg-room").value = "";
@@ -709,10 +691,9 @@ function initAdminPanel() {
   populateBillingStudentSelect();
   setupStudentsTableActions();
 
-  // Billing
   qs("#btn-calc-bill").addEventListener("click", () => {
     const roll = qs("#bill-roll").value;
-    const monthInput = Number(qs("#bill-month").value); // 1-12
+    const monthInput = Number(qs("#bill-month").value);
     const year = Number(qs("#bill-year").value);
     const out = qs("#bill-result");
 
@@ -726,7 +707,7 @@ function initAdminPanel() {
       return;
     }
 
-    const monthIndex = monthInput - 1; // 0-11
+    const monthIndex = monthInput - 1;
     const bill = calculateMonthlyBill(roll, year, monthIndex);
 
     if (bill instanceof Error) {
@@ -734,56 +715,107 @@ function initAdminPanel() {
       return;
     }
 
-   const label = formatMonthYear(year, monthIndex);
+    const label = formatMonthYear(year, monthIndex);
 
-out.innerHTML = `
-  <div style="margin-bottom:10px;">
-    <strong>Bill for:</strong> ${bill.studentName} (${label})
+    out.innerHTML = `
+      <div style="margin-bottom:10px;">
+        <strong>Bill for:</strong> ${bill.studentName} (${label})
+      </div>
 
-  </div>
+      <table class="table billing-table">
+        <thead>
+          <tr>
+            <th>Meal</th>
+            <th>Count</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Breakfast</td>
+            <td>${bill.counts.breakfast}</td>
+            <td>${formatCurrency(bill.prices.breakfast)}</td>
+            <td>${formatCurrency(bill.breakdown.breakfast)}</td>
+          </tr>
+          <tr>
+            <td>Lunch</td>
+            <td>${bill.counts.lunch}</td>
+            <td>${formatCurrency(bill.prices.lunch)}</td>
+            <td>${formatCurrency(bill.breakdown.lunch)}</td>
+          </tr>
+          <tr>
+            <td>Dinner</td>
+            <td>${bill.counts.dinner}</td>
+            <td>${formatCurrency(bill.prices.dinner)}</td>
+            <td>${formatCurrency(bill.breakdown.dinner)}</td>
+          </tr>
+        </tbody>
+      </table>
 
-  <table class="table billing-table">
-    <thead>
-      <tr>
-        <th>Meal</th>
-        <th>Count</th>
-        <th>Price</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Breakfast</td>
-        <td>${bill.counts.breakfast}</td>
-        <td>${formatCurrency(bill.prices.breakfast)}</td>
-        <td>${formatCurrency(bill.breakdown.breakfast)}</td>
-      </tr>
-      <tr>
-        <td>Lunch</td>
-        <td>${bill.counts.lunch}</td>
-        <td>${formatCurrency(bill.prices.lunch)}</td>
-        <td>${formatCurrency(bill.breakdown.lunch)}</td>
-      </tr>
-      <tr>
-        <td>Dinner</td>
-        <td>${bill.counts.dinner}</td>
-        <td>${formatCurrency(bill.prices.dinner)}</td>
-        <td>${formatCurrency(bill.breakdown.dinner)}</td>
-      </tr>
-    </tbody>
-  </table>
+      <div style="margin-top:12px; font-size:16px;">
+        <strong>Total:</strong> ${formatCurrency(bill.total)}
+      </div>
+    `;
+  });
 
-  <div style="margin-top:12px; font-size:16px;">
-    <strong>Total:</strong> ${formatCurrency(bill.total)}
-  </div>
-`;
+  qs("#btn-export-backup").addEventListener("click", () => {
+    const backup = exportAllData();
+    const json = JSON.stringify(backup, null, 2);
 
+    const blob = new Blob([json], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    const today = new Date().toISOString().slice(0, 10);
+    a.download = `mess-backup-${today}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  });
+
+  qs("#btn-import-backup").addEventListener("click", () => {
+    const fileInput = qs("#backup-file");
+    const msg = qs("#backup-message");
+
+    msg.style.color = "#039c55ff";
+    msg.textContent = "";
+
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      msg.textContent = "Please select a backup JSON file.";
+      msg.style.color = "#f20303";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        const res = importAllData(data);
+
+        msg.textContent = res.message || "Import done";
+        msg.style.color = res.ok ? "#16a34a" : "#f20303";
+
+        if (res.ok) {
+          renderStudentsTable();
+          populateBillingStudentSelect();
+          renderTodayMenu();
+        }
+      } catch (e) {
+        console.error(e);
+        msg.textContent = "Invalid JSON file";
+        msg.style.color = "#f20303";
+      }
+    };
+
+    reader.readAsText(file);
   });
 }
 
-/* ------------------------
-   ADMIN AUTH HANDLING
------------------------- */
 function initAdminAuth() {
   const adminContent = qs("#admin-content");
   const loginBtn = qs("#btn-admin-login");
@@ -823,15 +855,11 @@ function initAdminAuth() {
     refreshAdminUI();
   });
 
-  // admin UI তৈরি + ইভেন্ট অ্যাটাচ
   renderAdminContent();
   initAdminPanel();
   refreshAdminUI();
 }
 
-/* ------------------------
-   BOOTSTRAP APPLICATION
------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   renderAppShell();
   initTabs();
