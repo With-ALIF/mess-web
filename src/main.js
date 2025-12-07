@@ -110,6 +110,32 @@ function renderAppShell() {
                 </div>
                 <div id="stu-profile-content" class="muted">Load your profile first.</div>
               </div>
+
+              <!-- Student Booking History -->
+              
+
+              <!-- Student Bill Summary / Statement (Custom date range) -->
+              <div class="section-spacer"></div>
+              <div class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">My Bill & Statement</div>
+                    <div class="card-subtitle">Custom date range summary</div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">From</label>
+                  <input id="stu-bill-from" type="date" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">To</label>
+                  <input id="stu-bill-to" type="date" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <button class="btn btn-primary" id="btn-stu-bill">Show My Bill</button>
+                </div>
+                <div id="stu-bill-result" class="muted"></div>
+              </div>
             </div>
 
             <div>
@@ -232,6 +258,8 @@ function renderAppShell() {
   `;
 }
 
+
+
 function initTabs() {
   const buttons = document.querySelectorAll(".tab-btn");
   const panels = document.querySelectorAll(".tab-panel");
@@ -319,6 +347,8 @@ function handleBookingAction(action, mealType) {
     }
   }
   updateBookingStatus();
+
+  renderBookingHistoryForRoll(roll);
 }
 
 function initBulkBooking() {
@@ -389,12 +419,14 @@ function initStudentPanel() {
   const todayLabel = qs("#today-label");
   todayLabel.textContent = today.toLocaleDateString();
   const dateInput = document.querySelector("#booking-date");
+
   if (dateInput) {
     dateInput.value = todayStr;
     dateInput.addEventListener("change", () => {
       updateBookingStatus();
     });
   }
+
   const bulkStart = document.querySelector("#bulk-start");
   if (bulkStart) {
     bulkStart.value = todayStr;
@@ -412,13 +444,16 @@ function initStudentPanel() {
       msg.textContent = "Enter roll number.";
       profileDiv.textContent = "No profile loaded.";
       balanceBadge.textContent = "";
+      renderBookingHistoryForRoll(null);
       return;
     }
+
     const student = findStudent(roll);
     if (!student) {
       msg.textContent = "Student not found.";
       profileDiv.textContent = "No profile loaded.";
       balanceBadge.textContent = "";
+      renderBookingHistoryForRoll(null);
       return;
     }
     msg.textContent = "";
@@ -430,6 +465,7 @@ function initStudentPanel() {
       student.currentBalance
     )}`;
     updateBookingStatus();
+    renderBookingHistoryForRoll(roll);
   }
 
   qs("#btn-stu-load").addEventListener("click", loadStudentProfile);
@@ -457,14 +493,128 @@ function initStudentPanel() {
   initBulkBooking();
 }
 
+function initStudentBillSummary() {
+  const btn = document.querySelector("#btn-stu-bill");
+  const fromInput = document.querySelector("#stu-bill-from");
+  const toInput = document.querySelector("#stu-bill-to");
+  const resultDiv = document.querySelector("#stu-bill-result");
+  if (!btn || !fromInput || !toInput || !resultDiv) return;
+
+ 
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
+  fromInput.value = firstOfMonth;
+  toInput.value = todayStr;
+
+  btn.addEventListener("click", () => {
+    const rollInput = document.querySelector("#stu-roll");
+    const roll = rollInput ? rollInput.value.trim() : "";
+    resultDiv.style.color = "#374151";
+
+    if (!roll) {
+      resultDiv.textContent = "Load your profile with roll number first.";
+      resultDiv.style.color = "#b91c1c";
+      return;
+    }
+
+    const fromStr = fromInput.value;
+    const toStr = toInput.value;
+    if (!fromStr || !toStr) {
+      resultDiv.textContent = "Please select both From and To dates.";
+      resultDiv.style.color = "#b91c1c";
+      return;
+    }
+
+    const from = parseDateInputValue(fromStr);
+    const to = parseDateInputValue(toStr);
+
+    try {
+      const report = getRangeMealsReport(from, to);
+      if (!report || report instanceof Error) {
+        resultDiv.textContent =
+          (report && report.message) || "Could not load bill data.";
+        resultDiv.style.color = "#b91c1c";
+        return;
+      }
+
+      const list = report.byStudent || [];
+      const stu = list.find((s) => s.rollNo === roll);
+
+      if (!stu) {
+        resultDiv.textContent = "No meals found in this date range.";
+        resultDiv.style.color = "#b91c1c";
+        return;
+      }
+
+      const label = `${fromStr} to ${toStr}`;
+      resultDiv.style.color = "#374151";
+      resultDiv.innerHTML = `
+        <div style="margin-bottom:10px;">
+          <strong>Bill for:</strong> ${stu.name} (${stu.rollNo})<br/>
+          <span class="muted">Period: ${label}</span>
+        </div>
+
+        <div class="table-wrapper" style="max-height:none;">
+          <table class="billing-table">
+            <thead>
+              <tr>
+                <th>Meal</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Breakfast</td>
+                <td>${stu.breakfast || 0}</td>
+              </tr>
+              <tr>
+                <td>Lunch</td>
+                <td>${stu.lunch || 0}</td>
+              </tr>
+              <tr>
+                <td>Dinner</td>
+                <td>${stu.dinner || 0}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:12px; font-size:1.05rem;">
+          <strong>Total Amount:</strong> ${formatCurrency(stu.total || 0)}
+        </div>
+      `;
+    } catch (e) {
+      resultDiv.textContent =
+        (e && e.message) || "Could not calculate bill.";
+      resultDiv.style.color = "#b91c1c";
+    }
+  });
+}
+
+
 function renderStudentsTable() {
   const tbody = qs("#students-tbody");
   const students = listStudents();
-  if (!students.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muted">No students registered yet.</td></tr>`;
+  const searchInput = document.querySelector("#students-search");
+  const term = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+  let filtered = students;
+  if (term) {
+    filtered = students.filter(
+      (s) =>
+        s.name.toLowerCase().includes(term) ||
+        s.rollNo.toLowerCase().includes(term)
+    );
+  }
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">No students found.</td></tr>`;
     return;
   }
-  tbody.innerHTML = students
+  tbody.innerHTML = filtered
     .map(
       (s) => `
     <tr>
@@ -482,19 +632,32 @@ function renderStudentsTable() {
     .join("");
 }
 
+
 function populateBillingStudentSelect() {
   const sel = qs("#bill-roll");
+  const paySel = document.querySelector("#pay-roll");
   const students = listStudents();
   sel.innerHTML = "";
+  if (paySel) paySel.innerHTML = "";
+
   if (!students.length) {
     sel.innerHTML = `<option value="">No students</option>`;
+    if (paySel) paySel.innerHTML = `<option value="">No students</option>`;
     return;
   }
   students.forEach((s) => {
-    const opt = document.createElement("option");
-    opt.value = s.rollNo;
-    opt.textContent = `${s.rollNo} - ${s.name}`;
-    sel.appendChild(opt);
+    const text = `${s.rollNo} - ${s.name}`;
+    const opt1 = document.createElement("option");
+    opt1.value = s.rollNo;
+    opt1.textContent = text;
+    sel.appendChild(opt1);
+
+    if (paySel) {
+      const opt2 = document.createElement("option");
+      opt2.value = s.rollNo;
+      opt2.textContent = text;
+      paySel.appendChild(opt2);
+    }
   });
 }
 
@@ -505,6 +668,9 @@ function renderAdminContent() {
   adminContent.innerHTML = `
     <div class="layout">
       <div>
+        <!-- NEW: Dashboard placeholder -->
+        <div id="admin-dashboard" class="section-spacer"></div>
+
         <div class="card">
           <div class="card-header">
             <div>
@@ -622,6 +788,13 @@ function renderAdminContent() {
               <div class="card-subtitle">Registered students list</div>
             </div>
           </div>
+
+          <!-- NEW: Search box -->
+          <div class="form-group">
+            <label class="form-label">Search</label>
+            <input id="students-search" class="form-input" placeholder="Search by name or roll" />
+          </div>
+
           <div class="table-wrapper">
             <table class="table">
               <thead>
@@ -635,6 +808,29 @@ function renderAdminContent() {
               </thead>
               <tbody id="students-tbody"></tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- NEW: Add Payment / Deposit -->
+        <div class="section-spacer"></div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Add Payment</div>
+              <div class="card-subtitle">Add deposit to student's balance</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Student (Roll)</label>
+            <select id="pay-roll" class="form-input"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <input id="pay-amount" type="number" class="form-input" />
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary" id="btn-add-payment">Add Payment</button>
+            <span id="pay-message" class="muted"></span>
           </div>
         </div>
 
@@ -705,6 +901,8 @@ function renderAdminContent() {
 
           <div class="form-group">
             <button class="btn btn-primary" id="btn-show-report">Show Report</button>
+            <!-- NEW: Download PDF button -->
+            <button class="btn btn-secondary" id="btn-download-report" style="margin-left:8px;">Download PDF</button>
           </div>
 
           <div id="rep-result" class="muted"></div>
@@ -713,6 +911,7 @@ function renderAdminContent() {
     </div>
   `;
 }
+
 
 function setupStudentsTableActions() {
   const tbody = qs("#students-tbody");
@@ -851,85 +1050,7 @@ function renderMealsReport(report) {
   container.innerHTML = summaryHtml + detailsHtml;
 }
 
-function initReports() {
-  const typeSel = qs("#rep-type");
-  const resultDiv = qs("#rep-result");
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
-  const month = today.getMonth() + 1;
-  const year = today.getFullYear();
-  const dateInput = qs("#rep-date");
-  if (dateInput) dateInput.value = todayStr;
-  const monthInput = qs("#rep-month");
-  const yearInput = qs("#rep-year");
-  if (monthInput) monthInput.value = month;
-  if (yearInput) yearInput.value = year;
-  const fromInput = qs("#rep-from");
-  const toInput = qs("#rep-to");
-  if (fromInput && toInput) {
-    const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-      .toISOString()
-      .slice(0, 10);
-    fromInput.value = firstOfMonth;
-    toInput.value = todayStr;
-  }
-  function updateFields() {
-    const t = typeSel.value;
-    document.querySelectorAll(".rep-field").forEach((el) => {
-      el.style.display = "none";
-    });
-    if (t === "daily") {
-      const d = document.querySelector(".rep-daily");
-      if (d) d.style.display = "block";
-    } else if (t === "monthly") {
-      const d = document.querySelector(".rep-monthly");
-      if (d) d.style.display = "block";
-    } else {
-      const d = document.querySelector(".rep-range");
-      if (d) d.style.display = "block";
-    }
-    resultDiv.textContent = "";
-  }
-  typeSel.addEventListener("change", updateFields);
-  updateFields();
-  qs("#btn-show-report").addEventListener("click", () => {
-    const t = typeSel.value;
-    try {
-      let report;
-      if (t === "daily") {
-        const dStr = qs("#rep-date").value;
-        if (!dStr) {
-          resultDiv.textContent = "Please select a date.";
-          return;
-        }
-        const d = parseDateInputValue(dStr);
-        report = getDailyMealsReport(d);
-      } else if (t === "monthly") {
-        const m = Number(qs("#rep-month").value);
-        const y = Number(qs("#rep-year").value);
-        if (!m || !y || m < 1 || m > 12) {
-          resultDiv.textContent = "Enter valid month and year.";
-          return;
-        }
-        report = getMonthlyMealsReport(y, m - 1);
-      } else {
-        const fromStr = qs("#rep-from").value;
-        const toStr = qs("#rep-to").value;
-        if (!fromStr || !toStr) {
-          resultDiv.textContent = "Select both from and to dates.";
-          return;
-        }
-        const from = parseDateInputValue(fromStr);
-        const to = parseDateInputValue(toStr);
-        report = getRangeMealsReport(from, to);
-      }
-      renderMealsReport(report);
-    } catch (e) {
-      resultDiv.textContent =
-        (e && e.message) || "Could not generate report.";
-    }
-  });
-}
+
 
 function initAdminPanel() {
   qs("#btn-save-menu").addEventListener("click", () => {
@@ -945,7 +1066,9 @@ function initAdminPanel() {
     msg.textContent = "Menu saved.";
     msg.style.color = "#15803d";
     renderTodayMenu();
+    renderAdminDashboard();
   });
+
   qs("#btn-save-prices").addEventListener("click", () => {
     const bf = Number(qs("#admin-price-breakfast").value);
     const ln = Number(qs("#admin-price-lunch").value);
@@ -958,7 +1081,9 @@ function initAdminPanel() {
     });
     msg.textContent = "Prices saved.";
     msg.style.color = "#15803d";
+    renderAdminDashboard();
   });
+
   qs("#btn-register-student").addEventListener("click", () => {
     const name = qs("#reg-name").value.trim();
     const roll = qs("#reg-roll").value.trim();
@@ -1007,10 +1132,67 @@ function initAdminPanel() {
     qs("#reg-balance").value = "0";
     renderStudentsTable();
     populateBillingStudentSelect();
+    renderAdminDashboard();
   });
+
   renderStudentsTable();
   populateBillingStudentSelect();
   setupStudentsTableActions();
+
+ 
+  const searchInput = document.querySelector("#students-search");
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      renderStudentsTable();
+    });
+  }
+
+ 
+  const payBtn = document.querySelector("#btn-add-payment");
+  const payMsg = document.querySelector("#pay-message");
+  if (payBtn && payMsg) {
+    payBtn.addEventListener("click", () => {
+      const roll = document.querySelector("#pay-roll").value;
+      const amountStr = document.querySelector("#pay-amount").value;
+      const amount = Number(amountStr);
+      payMsg.style.color = "#374151";
+
+      if (!roll || isNaN(amount) || amount <= 0) {
+        payMsg.textContent = "Select student and enter a positive amount.";
+        payMsg.style.color = "#b91c1c";
+        return;
+      }
+
+      const student = findStudent(roll);
+      if (!student) {
+        payMsg.textContent = "Student not found.";
+        payMsg.style.color = "#b91c1c";
+        return;
+      }
+
+      const updatedStudent = {
+        ...student,
+        currentBalance: Number(student.currentBalance || 0) + amount
+      };
+      const res = updateStudent(updatedStudent);
+      payMsg.textContent = res.message || "Payment added.";
+      payMsg.style.color = res.ok ? "#15803d" : "#b91c1c";
+
+      renderStudentsTable();
+      populateBillingStudentSelect();
+      renderAdminDashboard();
+ 
+      const stuRollInput = document.querySelector("#stu-roll");
+      if (stuRollInput && stuRollInput.value.trim() === roll) {
+        const balanceBadge = document.querySelector("#stu-balance-badge");
+        if (balanceBadge) {
+          balanceBadge.textContent =
+            `Remaining Balance: ${formatCurrency(updatedStudent.currentBalance)}`;
+        }
+      }
+    });
+  }
+
   qs("#btn-calc-bill").addEventListener("click", () => {
     const roll = qs("#bill-roll").value;
     const monthInput = Number(qs("#bill-month").value);
@@ -1046,6 +1228,7 @@ function initAdminPanel() {
     }
     renderStudentsTable();
     populateBillingStudentSelect();
+    renderAdminDashboard();
     const stuRollInput = document.querySelector("#stu-roll");
     if (stuRollInput && stuRollInput.value.trim() === roll) {
       const balanceBadge = document.querySelector("#stu-balance-badge");
@@ -1065,7 +1248,7 @@ function initAdminPanel() {
           <thead>
             <tr style="color: green">
               <th>Meal</th>
-              <th>Count</h>
+              <th>Count</th>
               <th>Price</th>
               <th>Total</th>
             </tr>
@@ -1104,6 +1287,7 @@ function initAdminPanel() {
       </div>
     `;
   });
+
   qs("#btn-export-backup").addEventListener("click", () => {
     const backup = exportAllData();
     const json = JSON.stringify(backup, null, 2);
@@ -1118,6 +1302,7 @@ function initAdminPanel() {
     a.click();
     URL.revokeObjectURL(url);
   });
+
   qs("#btn-import-backup").addEventListener("click", () => {
     const fileInput = qs("#backup-file");
     const msg = qs("#backup-message");
@@ -1140,6 +1325,7 @@ function initAdminPanel() {
           renderStudentsTable();
           populateBillingStudentSelect();
           renderTodayMenu();
+          renderAdminDashboard();
         }
       } catch (e) {
         msg.textContent = "Invalid JSON file";
@@ -1148,7 +1334,73 @@ function initAdminPanel() {
     };
     reader.readAsText(file);
   });
+
   initReports();
+  renderAdminDashboard();
+}
+
+
+
+function renderAdminDashboard() {
+  const dash = document.querySelector("#admin-dashboard");
+  if(!dash) return;
+
+  try {
+    const today = new Date();
+    const report = getDailyMealsReport(today);
+    const prices = getPrices();
+    const studnetCount = listStudents().length;
+
+    if(!report || report instanceof Error) {
+      dash.innerHTML = `
+        <div class="card">
+        <div class="card-header">
+          <div>
+          <div class="card-title"> Today Overview</div>
+          <div class="card-subtitle"> ${today.toLocaleDateString()} </div>
+        </div>
+        </div>
+        <div class="muted">No data for  today </div>
+        <.div>
+      `;
+      return;
+    }
+      const summary = report.summary || {};
+    const estTotal =
+      (summary.breakfastCount || 0) * (prices.breakfast || 0) +
+      (summary.lunchCount || 0) * (prices.lunch || 0) +
+      (summary.dinnerCount || 0) * (prices.dinner || 0);
+
+    dash.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Today Overview</div>
+            <div class="card-subtitle">${today.toLocaleDateString()}</div>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <div class="muted">Students</div>
+            <div><strong>${studentCount}</strong></div>
+          </div>
+          <div>
+            <div class="muted">Breakfast / Lunch / Dinner</div>
+            <div><strong>${summary.breakfastCount || 0} / ${
+      summary.lunchCount || 0
+    } / ${summary.dinnerCount || 0}</strong></div>
+          </div>
+          <div>
+            <div class="muted">Estimated Total</div>
+            <div><strong>${formatCurrency(estTotal)}</strong></div>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    dash.textContent = "Could not load dashboard.";
+
+  }
 }
 
 function initAdminAuth() {
@@ -1198,4 +1450,134 @@ document.addEventListener("DOMContentLoaded", () => {
   initTabs();
   initStudentPanel();
   initAdminAuth();
+  initStudentBillSummary();  
 });
+
+function initReports() {
+  const typeSel = qs("#rep-type");
+  const resultDiv = qs("#rep-result");
+
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const month = today.getMonth() + 1;
+  const year = today.getFullYear();
+
+  const dateInput = qs("#rep-date");
+  if (dateInput) dateInput.value = todayStr;
+
+  const monthInput = qs("#rep-month");
+  const yearInput = qs("#rep-year");
+  if (monthInput) monthInput.value = month;
+  if (yearInput) yearInput.value = year;
+
+  const fromInput = qs("#rep-from");
+  const toInput = qs("#rep-to");
+  if (fromInput && toInput) {
+    const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+      .toISOString()
+      .slice(0, 10);
+    fromInput.value = firstOfMonth;
+    toInput.value = todayStr;
+  }
+
+  function updateFields() {
+    const t = typeSel.value;
+    document.querySelectorAll(".rep-field").forEach((el) => {
+      el.style.display = "none";
+    });
+
+    if (t === "daily") {
+      const d = document.querySelector(".rep-daily");
+      if (d) d.style.display = "block";
+    } else if (t === "monthly") {
+      const d = document.querySelector(".rep-monthly");
+      if (d) d.style.display = "block";
+    } else {
+      const d = document.querySelector(".rep-range");
+      if (d) d.style.display = "block";
+    }
+
+    resultDiv.textContent = "";
+    resultDiv.style.color = "#374151";
+  }
+
+  typeSel.addEventListener("change", updateFields);
+  updateFields();
+
+  qs("#btn-show-report").addEventListener("click", () => {
+    const t = typeSel.value;
+    resultDiv.style.color = "#374151";
+
+    try {
+      let report;
+
+      if (t === "daily") {
+        const dStr = qs("#rep-date").value;
+        if (!dStr) {
+          resultDiv.textContent = "Please select a date.";
+          resultDiv.style.color = "#b91c1c";
+          return;
+        }
+        const d = parseDateInputValue(dStr);
+        report = getDailyMealsReport(d);
+      } 
+      else if (t === "monthly") {
+        const m = Number(qs("#rep-month").value);
+        const y = Number(qs("#rep-year").value);
+        if (!m || !y || m < 1 || m > 12) {
+          resultDiv.textContent = "Enter valid month and year.";
+          resultDiv.style.color = "#b91c1c";
+          return;
+        }
+        report = getMonthlyMealsReport(y, m - 1);
+      } 
+      else {
+        const fromStr = qs("#rep-from").value;
+        const toStr = qs("#rep-to").value;
+        if (!fromStr || !toStr) {
+          resultDiv.textContent = "Select both from and to dates.";
+          resultDiv.style.color = "#b91c1c";
+          return;
+        }
+        const from = parseDateInputValue(fromStr);
+        const to = parseDateInputValue(toStr);
+        report = getRangeMealsReport(from, to);
+      }
+
+      renderMealsReport(report);
+    } catch (e) {
+      resultDiv.textContent = (e && e.message) || "Could not generate report.";
+      resultDiv.style.color = "#b91c1c";
+    }
+  });
+
+  
+  const pdfBtn = document.querySelector("#btn-download-report");
+
+  if (pdfBtn) {
+    pdfBtn.addEventListener("click", async () => {
+      if (!resultDiv.innerHTML.trim()) {
+        resultDiv.textContent = "Generate a report first, then download.";
+        resultDiv.style.color = "#b91c1c";
+        return;
+      }
+
+      const { jsPDF } = window.jspdf || {};
+      if (!jsPDF) {
+        alert("PDF library (jsPDF) not loaded.");
+        return;
+      }
+
+      const doc = new jsPDF("p", "pt", "a4");
+
+      await doc.html(resultDiv, {
+        callback: function (doc) {
+          doc.save("meal-report.pdf");
+        },
+        margin: [20, 20, 20, 20],
+        autoPaging: "text",
+        html2canvas: { scale: 0.8 }
+      });
+    });
+  }
+}
