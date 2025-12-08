@@ -290,10 +290,7 @@ export function initAdminPanel() {
       </div>
 
       <div><strong>Total Bill:</strong> ${formatCurrency(total)}</div>
-      <div><strong>Previously Charged:</strong> ${formatCurrency(
-        prevBilled
-      )}</div>
-      <div><strong>Charged Now:</strong> ${formatCurrency(Math.max(delta, 0))}</div>
+    
       <div><strong>New Balance:</strong> ${formatCurrency(storedBalance)}</div>
     `;
   });
