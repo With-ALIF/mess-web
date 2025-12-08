@@ -113,7 +113,7 @@ body {
 }
 
 .section-spacer {
-  height: 14px;
+  height: 20px;
 }
 
 .form-group {
@@ -257,7 +257,6 @@ input[type="file"].form-input {
   background: #ffffff;
   width: 100%;
 }
-
 
 .table {
   width: 100%;
