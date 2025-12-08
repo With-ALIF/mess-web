@@ -1,36 +1,26 @@
-// src/admin-reports.js
-import {
-  qs,
-  formatCurrency,
-  parseDateInputValue
-} from "./utils.js";
-
-import {
-  getDailyMealsReport,
-  getMonthlyMealsReport,
-  getRangeMealsReport
-} from "./billing.js";
+import { qs, formatCurrency, parseDateInputValue } from "./utils.js";
+import { getDailyMealsReport, getMonthlyMealsReport, getRangeMealsReport } from "./billing.js";
+import { downloadReportJPG } from "./picture.js";
 
 function renderMealsReport(report) {
   const container = qs("#rep-result");
-  if (!report) {
-    container.textContent = "No data found.";
+
+  if (!report || report instanceof Error || report.error) {
+    container.textContent = report?.message || "No data found.";
     return;
   }
-  if (report instanceof Error || report.error) {
-    container.textContent =
-      report.message || "Could not load report data.";
-    return;
-  }
+
   const title = report.title || report.label || "";
   const summary = report.summary || {};
   const list = report.byStudent || [];
+
   if (!list.length) {
     container.innerHTML = title
       ? `<div><strong>${title}</strong></div><div>No data found.</div>`
       : "No data found.";
     return;
   }
+
   const summaryHtml = `
     <div style="margin-bottom:10px;">
       <strong>${title}</strong>
@@ -64,6 +54,7 @@ function renderMealsReport(report) {
       </table>
     </div>
   `;
+
   const detailsHtml = `
     <div class="table-wrapper" style="max-height:none; margin-top:8px;">
       <table class="report-table">
@@ -88,8 +79,7 @@ function renderMealsReport(report) {
               <td>${s.lunch || 0}</td>
               <td>${s.dinner || 0}</td>
               <td>${formatCurrency(s.total || 0)}</td>
-            </tr>
-          `
+            </tr>`
             )
             .join("")}
         </tbody>
@@ -99,6 +89,7 @@ function renderMealsReport(report) {
       Grand Total: ${formatCurrency(summary.grandTotal || 0)}
     </div>
   `;
+
   container.innerHTML = summaryHtml + detailsHtml;
 }
 
@@ -108,16 +99,14 @@ export function initReports() {
 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
-  const month = today.getMonth() + 1;
-  const year = today.getFullYear();
 
   const dateInput = qs("#rep-date");
   if (dateInput) dateInput.value = todayStr;
 
   const monthInput = qs("#rep-month");
   const yearInput = qs("#rep-year");
-  if (monthInput) monthInput.value = month;
-  if (yearInput) yearInput.value = year;
+  if (monthInput) monthInput.value = today.getMonth() + 1;
+  if (yearInput) yearInput.value = today.getFullYear();
 
   const fromInput = qs("#rep-from");
   const toInput = qs("#rep-to");
@@ -131,23 +120,11 @@ export function initReports() {
 
   function updateFields() {
     const t = typeSel.value;
-    document.querySelectorAll(".rep-field").forEach((el) => {
-      el.style.display = "none";
-    });
-
-    if (t === "daily") {
-      const d = document.querySelector(".rep-daily");
-      if (d) d.style.display = "block";
-    } else if (t === "monthly") {
-      const d = document.querySelector(".rep-monthly");
-      if (d) d.style.display = "block";
-    } else {
-      const d = document.querySelector(".rep-range");
-      if (d) d.style.display = "block";
-    }
-
+    document.querySelectorAll(".rep-field").forEach((el) => (el.style.display = "none"));
+    if (t === "daily") document.querySelector(".rep-daily").style.display = "block";
+    else if (t === "monthly") document.querySelector(".rep-monthly").style.display = "block";
+    else document.querySelector(".rep-range").style.display = "block";
     resultDiv.textContent = "";
-    resultDiv.style.color = "#374151";
   }
 
   typeSel.addEventListener("change", updateFields);
@@ -155,11 +132,9 @@ export function initReports() {
 
   qs("#btn-show-report").addEventListener("click", () => {
     const t = typeSel.value;
-    resultDiv.style.color = "#374151";
+    let report;
 
     try {
-      let report;
-
       if (t === "daily") {
         const dStr = qs("#rep-date").value;
         if (!dStr) {
@@ -167,8 +142,7 @@ export function initReports() {
           resultDiv.style.color = "#b91c1c";
           return;
         }
-        const d = parseDateInputValue(dStr);
-        report = getDailyMealsReport(d);
+        report = getDailyMealsReport(parseDateInputValue(dStr));
       } else if (t === "monthly") {
         const m = Number(qs("#rep-month").value);
         const y = Number(qs("#rep-year").value);
@@ -186,45 +160,63 @@ export function initReports() {
           resultDiv.style.color = "#b91c1c";
           return;
         }
-        const from = parseDateInputValue(fromStr);
-        const to = parseDateInputValue(toStr);
-        report = getRangeMealsReport(from, to);
+        report = getRangeMealsReport(
+          parseDateInputValue(fromStr),
+          parseDateInputValue(toStr)
+        );
       }
 
       renderMealsReport(report);
     } catch (e) {
-      resultDiv.textContent =
-        (e && e.message) || "Could not generate report.";
+      resultDiv.textContent = e.message || "Could not generate report.";
       resultDiv.style.color = "#b91c1c";
     }
   });
 
-  const pdfBtn = document.querySelector("#btn-download-report");
-
+  const pdfBtn = qs("#btn-download-report");
   if (pdfBtn) {
     pdfBtn.addEventListener("click", async () => {
       if (!resultDiv.innerHTML.trim()) {
-        resultDiv.textContent = "Generate a report first, then download.";
+        resultDiv.textContent = "Generate a report first.";
         resultDiv.style.color = "#b91c1c";
         return;
       }
 
       const { jsPDF } = window.jspdf || {};
       if (!jsPDF) {
-        alert("PDF library (jsPDF) not loaded.");
+        alert("PDF library missing.");
         return;
       }
 
-      const doc = new jsPDF("p", "pt", "a4");
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "pt",
+        format: "a4",
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
 
       await doc.html(resultDiv, {
-        callback: function (doc) {
-          doc.save("meal-report.pdf");
-        },
-        margin: [20, 20, 20, 20],
-        autoPaging: "text",
-        html2canvas: { scale: 0.8 }
+        callback: (doc) => doc.save("meal-report.pdf"),
+        x: margin,
+        y: margin,
+        width: pageWidth - margin * 2,
+        windowWidth: resultDiv.scrollWidth || resultDiv.offsetWidth,
+        html2canvas: { scale: 0.8 },
       });
+    });
+  }
+
+  const jpgBtn = qs("#btn-download-report-jpg");
+  if (jpgBtn) {
+    jpgBtn.addEventListener("click", () => {
+      if (!resultDiv.innerHTML.trim()) {
+        resultDiv.textContent = "Generate a report first.";
+        resultDiv.style.color = "#b91c1c";
+        return;
+      }
+      downloadReportJPG(resultDiv);
     });
   }
 }
