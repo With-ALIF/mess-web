@@ -160,6 +160,7 @@ input[type="file"].form-input {
 
 .row > * {
   flex: 1;
+ 
 }
 
 .btn {
@@ -340,7 +341,7 @@ input[type="file"].form-input {
 }
 
 .report-table {
-  width: 100%;
+  
   border-collapse: collapse;
   background: #ffffff;
   border-radius: 10px;
@@ -480,4 +481,10 @@ input[type="file"].form-input {
   .report-table td {
     padding: 5px 6px;
   }
+}
+
+.summary-table,
+.report-table {
+  width: 100%;
+  table-layout: fixed;
 }
