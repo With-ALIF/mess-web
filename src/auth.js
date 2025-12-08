@@ -1,5 +1,6 @@
-const ADMIN_STATE_KEY = "mess_admin_state";
+// auth.js
 
+const ADMIN_STATE_KEY = "mess_admin_state";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin123";

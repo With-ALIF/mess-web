@@ -1,0 +1,277 @@
+<!-- Admin Login Card -->
+<div class="card" id="admin-login-card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">Admin Panel</div>
+      <div class="card-subtitle">Login to manage system</div>
+    </div>
+    <button class="btn btn-secondary" id="btn-admin-logout" style="display:none;">Logout</button>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Username</label>
+    <input id="admin-user" class="form-input" disabled />
+  </div>
+
+  <div class="form-group" id="admin-pass-group">
+    <label class="form-label">Password</label>
+    <input id="admin-pass" type="password" class="form-input" placeholder="Enter admin password" />
+  </div>
+
+  <div class="form-group">
+    <button class="btn btn-primary" id="btn-admin-login">Login</button>
+    <span id="admin-login-message" class="muted"></span>
+  </div>
+</div>
+
+ <div id="admin-content" style="display:none;">
+  <div class="layout">
+    <div>
+
+<div class="card">
+  <div id="admin-dashboard"></div>
+</div>
+
+<div class="section-spacer"></div>
+
+<div class="section-spacer"></div>
+
+
+      <div class="section-spacer"></div>
+
+       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Today's Menu</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Breakfast</label>
+          <input id="admin-menu-breakfast" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lunch</label>
+          <input id="admin-menu-lunch" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dinner</label>
+          <input id="admin-menu-dinner" class="form-input" />
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary" id="btn-save-menu">Save Menu</button>
+          <span id="admin-menu-message" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="section-spacer"></div>
+
+       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Meal Prices</div>
+            <div class="card-subtitle">Per-meal charges</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Breakfast Price</label>
+          <input id="admin-price-breakfast" type="number" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lunch Price</label>
+          <input id="admin-price-lunch" type="number" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dinner Price</label>
+          <input id="admin-price-dinner" type="number" class="form-input" />
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary" id="btn-save-prices">Save Prices</button>
+          <span id="admin-price-message" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="section-spacer"></div>
+
+       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Data Backup & Restore</div>
+            <div class="card-subtitle">JSON export / import</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-primary" id="btn-export-backup">Download JSON</button>
+        </div>
+
+        <div class="form-group">
+          <label for="backup-file" class="form-label">Import JSON</label>
+          <input type="file" id="backup-file" class="form-input" accept="application/json" />
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-secondary" id="btn-import-backup">Import Backup</button>
+          <span id="backup-message" class="muted"></span>
+        </div>
+      </div>
+    </div>
+
+     <div>
+       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Register Student</div>
+            <div class="card-subtitle">Add or edit resident</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input id="reg-name" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Roll No</label>
+          <input id="reg-roll" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Room No</label>
+          <input id="reg-room" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Balance</label>
+          <input id="reg-balance" type="number" class="form-input" value="0" />
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary" id="btn-register-student">Register</button>
+          <span id="reg-message" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="section-spacer"></div>
+
+       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Students</div>
+            <div class="card-subtitle">Registered students list</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Search</label>
+          <input id="students-search" class="form-input" placeholder="Search by name or roll" />
+        </div>
+
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Roll</th>
+                <th>Room</th>
+                <th>Balance</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-spacer"></div>
+
+       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Add Payment</div>
+            <div class="card-subtitle">Add deposit to student's balance</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Student (Roll)</label>
+          <select id="pay-roll" class="form-input"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount</label>
+          <input id="pay-amount" type="number" class="form-input" />
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary" id="btn-add-payment">Add Payment</button>
+          <span id="pay-message" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="section-spacer"></div>
+
+       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Monthly Billing</div>
+            <div class="card-subtitle">Calculate student's bill</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Student (Roll)</label>
+          <select id="bill-roll" class="form-input"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Month (1-12)</label>
+          <input id="bill-month" type="number" class="form-input" min="1" max="12" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Year</label>
+          <input id="bill-year" type="number" class="form-input" />
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary" id="btn-calc-bill">Calculate</button>
+        </div>
+        <div id="bill-result" class="muted"></div>
+      </div>
+
+      <div class="section-spacer"></div>
+
+       <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Meal Report</div>
+            <div class="card-subtitle">Daily / Monthly / Custom Range</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Report Type</label>
+          <select id="rep-type" class="form-input">
+            <option value="daily">Daily</option>
+            <option value="monthly">Monthly</option>
+            <option value="range">Custom Range</option>
+          </select>
+        </div>
+
+        <div class="form-group rep-field rep-daily">
+          <label class="form-label">Date</label>
+          <input id="rep-date" type="date" class="form-input" />
+        </div>
+
+        <div class="form-group rep-field rep-monthly" style="display:none;">
+          <label class="form-label">Month</label>
+          <input id="rep-month" type="number" class="form-input" min="1" max="12" />
+          <label class="form-label">Year</label>
+          <input id="rep-year" type="number" class="form-input" />
+        </div>
+
+        <div class="form-group rep-field rep-range" style="display:none;">
+          <label class="form-label">From</label>
+          <input id="rep-from" type="date" class="form-input" />
+          <label class="form-label">To</label>
+          <input id="rep-to" type="date" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-primary" id="btn-show-report">Show Report</button>
+          <button class="btn btn-secondary" id="btn-download-report" style="margin-left:8px;">Download PDF</button>
+        </div>
+
+        <div id="rep-result" class="muted"></div>
+      </div>
+    </div>
+  </div>
+</div>

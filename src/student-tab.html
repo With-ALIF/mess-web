@@ -1,0 +1,141 @@
+<div class="layout">
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Student Login</div>
+          <div class="card-subtitle">Load your profile</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Roll No</label>
+        <input id="stu-roll" class="form-input" />
+      </div>
+      <div class="form-group">
+        <button class="btn btn-primary" id="btn-stu-load">Load Profile</button>
+        <span id="stu-message" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="section-spacer"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Profile</div>
+          <div class="card-subtitle">Information & balance</div>
+        </div>
+        <span id="stu-balance-badge" class="badge badge-success"></span>
+      </div>
+      <div id="stu-profile-content" class="muted">Load your profile first.</div>
+    </div>
+
+     
+    <div class="section-spacer"></div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">My Bill & Statement</div>
+          <div class="card-subtitle">Custom date range summary</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">From</label>
+        <input id="stu-bill-from" type="date" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">To</label>
+        <input id="stu-bill-to" type="date" class="form-input" />
+      </div>
+      <div class="form-group">
+        <button class="btn btn-primary" id="btn-stu-bill">Show My Bill</button>
+      </div>
+      <div id="stu-bill-result" class="muted"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Menu & Booking</div>
+          <div class="card-subtitle">Book or cancel meals for a date</div>
+        </div>
+        <div>
+          <div class="muted" style="font-size:12px; text-align:right;">Select Date</div>
+          <input id="booking-date" type="date" class="form-input" style="max-width:160px;" />
+          <div id="today-label" class="badge" style="margin-top:4px;"></div>
+        </div>
+      </div>
+
+      <div id="today-menu" class="muted"></div>
+      <div class="section-spacer"></div>
+
+      <div class="form-group">
+        <div class="card-subtitle" style="margin-bottom:6px;">Booking Status</div>
+        <div id="booking-status" class="muted">Load profile to see status</div>
+      </div>
+
+      <div class="form-group">
+        <div class="card-subtitle" style="margin-bottom:6px;">Actions</div>
+        <div class="row">
+          <div>
+            <div class="muted">Breakfast</div>
+            <button class="btn btn-primary" data-book="breakfast">Book</button>
+            <button class="btn btn-secondary" data-cancel="breakfast">Cancel</button>
+          </div>
+          <div>
+            <div class="muted">Lunch</div>
+            <button class="btn btn-primary" data-book="lunch">Book</button>
+            <button class="btn btn-secondary" data-cancel="lunch">Cancel</button>
+          </div>
+          <div>
+            <div class="muted">Dinner</div>
+            <button class="btn btn-primary" data-book="dinner">Book</button>
+            <button class="btn btn-secondary" data-cancel="dinner">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <span id="booking-message" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="section-spacer"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Bulk Booking</div>
+          <div class="card-subtitle">Next days booking / cancel</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Start Date</label>
+        <input id="bulk-start" type="date" class="form-input" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Days</label>
+        <input id="bulk-days" type="number" class="form-input" value="7" min="1" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Meals</label>
+        <div class="row">
+          <label><input type="checkbox" id="bulk-bf" checked /> Breakfast</label>
+          <label><input type="checkbox" id="bulk-lunch" checked /> Lunch</label>
+          <label><input type="checkbox" id="bulk-dinner" checked /> Dinner</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <button class="btn btn-primary" id="btn-bulk-book">Bulk Book</button>
+        <button class="btn btn-secondary" id="btn-bulk-cancel">Bulk Cancel</button>
+        <span id="bulk-message" class="muted"></span>
+      </div>
+    </div>
+  </div>
+</div>
