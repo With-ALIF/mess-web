@@ -83,3 +83,63 @@ project/
     ui-shell.js
     main.js
 
+```
+
+## 🧭 Usage Guide
+
+---
+
+## 👨‍🎓 Student Side
+
+1. Go to **Student** tab.  
+2. Enter your **Roll** and login.
+
+You can:
+
+- ✔️ See today’s menu  
+- ✔️ Book today’s meals  
+- ✔️ View your meal history  
+- ✔️ Check your remaining balance  
+
+---
+
+## 🧑‍💼 Admin Side
+
+1. Switch to **Admin** tab.  
+2. Enter admin password (defined in `admin-auth.js`).  
+
+After login you can:
+
+---
+
+## 🍽️ Menu & Prices
+
+- Set today’s **Breakfast / Lunch / Dinner** menu  
+- Set **per-meal prices**  
+
+---
+
+## 🧍 Students
+
+- Register a new student (Name, Roll, Room, starting Balance)  
+- View all students in a table:
+  - **Name**, **Roll**, **Room**, **Deposit**, **Balance**
+- Edit or delete a student  
+
+### ➕ Add Payment
+
+- Select **Roll**  
+- Enter **Amount**  
+- Click **Add Payment**  
+  → This updates **currentBalance** and **totalDeposits**  
+
+---
+
+## 📅 Monthly Billing Logic
+
+1. Choose **Roll**, **Month**, **Year**  
+2. Click **Calculate**  
+3. System calculates the **total bill** for that month  
+4. Compares with previously billed amount:
+
+
