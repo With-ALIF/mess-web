@@ -2,53 +2,75 @@ https://with-alif.github.io/mess-web/
 
 # Student Hall Mess Management System
 
-A single-page web app for managing a university hall **mess** (canteen) using only HTML, CSS and vanilla JavaScript (ES modules).  
-Data is stored in `localStorage`, so everything works completely offline in the browser.
-
-> 💡 UI has two tabs: **Student** and **Admin** – both run from the same page.
+A complete offline-capable mess (canteen) management system built using  
+**HTML + CSS + Vanilla JavaScript (ES Modules)** with localStorage-based data storage.  
+This system includes both **Student Panel** and **Admin Panel** inside a single-page app.
 
 ---
 
-## ✨ Main Features
+## 🖼️ App Preview (Screenshots)
 
-### 👨‍🎓 Student Panel
+### 🔹 Overview (Dashboard)
+![Overview](./picture/overview.jpg)
 
-- Login by **Roll** number
-- See **today’s menu** (Breakfast/Lunch/Dinner)
-- Book / cancel meals for today
-- View own **meal history**
-- Live **remaining balance** badge
-- Works nicely on mobile as well
+### 🔹 Booking / Daily Meal Selection
+![Booking](./picture/booking.jpg)
 
-### 🧑‍💼 Admin Panel
+### 🔹 Meal Report Export (PDF / JPG)
+![Meal Report](./picture/meal-report.jpg)
 
-- Admin login (password logic in `admin-auth.js`)
-- Dashboard with today’s overview:
-  - total students
-  - today’s meal counts
-  - estimated total cost
-- Manage **today’s menu**
-- Set **meal prices** (breakfast / lunch / dinner)
-- **Register students** (name, roll, room, starting balance)
-- View / search **students list** (Name, Roll, Room, Deposit, Balance)
-- Edit & delete students
-- Add **payments / deposits**
-  - Increases both `currentBalance` and `totalDeposits`
-- Monthly billing:
-  - Calculates meals for a month
-  - Only **extra unbilled amount** is charged (using `billedTotals`)
-  - Updates student `currentBalance`
-- **Data backup & restore**
-  - Export all data as JSON
-  - Import JSON backup
+---
 
-### 📊 Reports & Exports
+## ✨ Features
 
-- Daily, Monthly, and Custom Range **Meal Report**
-- Summary + per-student breakdown table
-- Export the current report as:
-  - **PDF** (via jsPDF)
-  - **JPG image** (via html2canvas, handled by `picture.js`)
+### 👨‍🎓 Student Features
+- View today’s **Breakfast / Lunch / Dinner** menu  
+- Book meals for the day  
+- See meal history  
+- Check **Remaining Balance**  
+- Simple Roll-based login  
+- Fully mobile-responsive UI  
+
+---
+
+### 🧑‍💼 Admin Features
+
+#### 🛡️ Admin Login
+- Password-protected admin access  
+- Credentials handled in `admin-auth.js`
+
+#### 🍽️ Menu & Prices
+- Set daily **Breakfast / Lunch / Dinner** menu  
+- Configure per-meal price settings  
+
+#### 👥 Student Management
+- Add new students (Name, Roll, Room, Starting Balance)  
+- Edit / Delete students  
+- Add **Payments (Deposits)**  
+  - Updates both `totalDeposits` & `currentBalance`  
+- View searchable student list:
+  - Name  
+  - Roll  
+  - Room  
+  - Deposit  
+  - Balance  
+
+#### 💵 Monthly Billing
+- Select student, month, and year  
+- Calculates based on actual meals taken  
+- Smart billing:
+  - `delta = newTotal - previousBilledAmount`
+  - Only extra meals are charged  
+- Updates `currentBalance` automatically  
+- Prevents **double billing**  
+
+#### 📊 Reports (Daily / Monthly / Range)
+- Summary table (meal counts + total amount)  
+- Per-student breakdown  
+- Grand Total  
+- Export options:
+  - **PDF (jsPDF)**
+  - **JPG (html2canvas via picture.js)**  
 
 ---
 
@@ -62,7 +84,7 @@ Data is stored in `localStorage`, so everything works completely offline in the 
 
 ---
 
-## 📁 Folder Structure (example)
+## 📁 Folder Structure  
 
 ```text
 project/
