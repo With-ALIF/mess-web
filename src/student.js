@@ -2,19 +2,17 @@
 
 import { getStudents, saveStudents } from "./storage.js";
 
-// সব student লিস্ট রিটার্ন করবে
 export function listStudents() {
   return getStudents();
 }
 
-// roll দিয়ে এক জন student খুঁজে আনে
 export function findStudent(rollNo) {
   const students = getStudents();
   return students.find((s) => s.rollNo === String(rollNo).trim()) || null;
 }
 
-// student আপডেট করে localStorage এ সেভ করবে
-// usage: updateStudent(updatedStudentObject)
+
+
 export function updateStudent(updated) {
   const students = getStudents();
   const trimmedRoll = String(updated.rollNo).trim();
@@ -35,14 +33,11 @@ export function updateStudent(updated) {
   return { ok: true, message: "Student updated", student: students[idx] };
 }
 
-// নতুন student রেজিস্টার করবে
-// usage: registerStudent(rollNo, name, roomNumber, initialBalance)
 export function registerStudent(rollNo, name, roomNumber, initialBalance) {
   const trimmedRoll = String(rollNo).trim();
   const trimmedName = String(name).trim();
   const trimmedRoom = String(roomNumber).trim();
 
-  // === Validation ===
   if (!trimmedRoll || !trimmedName || !trimmedRoom) {
     return { ok: false, message: "Roll, name and room are required" };
   }
@@ -67,7 +62,6 @@ export function registerStudent(rollNo, name, roomNumber, initialBalance) {
   return { ok: true, message: "Student registered successfully", student };
 }
 
-// roll দিয়ে student ডিলিট করবে
 export function deleteStudent(rollNo) {
   const trimmedRoll = String(rollNo).trim();
   const students = getStudents();
