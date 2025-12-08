@@ -1,9 +1,4 @@
-// src/admin-panel.js
-import {
-  qs,
-  formatCurrency
-} from "./utils.js";
-
+import { qs, formatCurrency } from "./utils.js";
 import {
   getMenu,
   saveMenu,
@@ -12,7 +7,6 @@ import {
   exportAllData,
   importAllData
 } from "./storage.js";
-
 import {
   listStudents,
   registerStudent,
@@ -20,16 +14,9 @@ import {
   updateStudent,
   deleteStudent
 } from "./student.js";
-
-import {
-  calculateMonthlyBill,
-  formatMonthYear
-} from "./billing.js";
-
+import { calculateMonthlyBill, formatMonthYear } from "./billing.js";
 import { renderTodayMenu } from "./student-ui.js";
-
 import { renderAdminDashboard } from "./dashboard.js";
-
 import { initReports } from "./admin-reports.js";
 
 let currentEditingRoll = null;
@@ -37,22 +24,21 @@ let currentEditingRoll = null;
 function renderStudentsTable() {
   const tbody = qs("#students-tbody");
   const students = listStudents();
-  const searchInput = document.querySelector("#students-search");
-  const term = searchInput ? searchInput.value.trim().toLowerCase() : "";
-
-  let filtered = students;
-  if (term) {
-    filtered = students.filter(
-      (s) =>
-        s.name.toLowerCase().includes(term) ||
-        s.rollNo.toLowerCase().includes(term)
-    );
-  }
+  const term = (qs("#students-search")?.value || "").trim().toLowerCase();
+  const filtered = term
+    ? students.filter(
+        (s) =>
+          s.name.toLowerCase().includes(term) ||
+          s.rollNo.toLowerCase().includes(term)
+      )
+    : students;
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muted">No students found.</td></tr>`;
+    tbody.innerHTML =
+      '<tr><td colspan="6" class="muted">No students found.</td></tr>';
     return;
   }
+
   tbody.innerHTML = filtered
     .map(
       (s) => `
@@ -60,77 +46,69 @@ function renderStudentsTable() {
       <td>${s.name}</td>
       <td>${s.rollNo}</td>
       <td>${s.roomNumber}</td>
-      <td>${formatCurrency(s.currentBalance)}</td>
+      <td>${formatCurrency(s.totalDeposits || 0)}</td>
+      <td>${formatCurrency(s.currentBalance || 0)}</td>
       <td>
         <button class="btn btn-secondary btn-sm" data-edit-roll="${s.rollNo}">Edit</button>
         <button class="btn btn-danger btn-sm" data-delete-roll="${s.rollNo}">Delete</button>
       </td>
-    </tr>
-  `
+    </tr>`
     )
     .join("");
 }
 
 function populateBillingStudentSelect() {
   const sel = qs("#bill-roll");
-  const paySel = document.querySelector("#pay-roll");
+  const paySel = qs("#pay-roll");
   const students = listStudents();
   sel.innerHTML = "";
-  if (paySel) paySel.innerHTML = "";
+  paySel.innerHTML = "";
 
   if (!students.length) {
-    sel.innerHTML = `<option value="">No students</option>`;
-    if (paySel) paySel.innerHTML = `<option value="">No students</option>`;
+    sel.innerHTML = `<option>No students</option>`;
+    paySel.innerHTML = `<option>No students</option>`;
     return;
   }
-  students.forEach((s) => {
-    const text = `${s.rollNo} - ${s.name}`;
-    const opt1 = document.createElement("option");
-    opt1.value = s.rollNo;
-    opt1.textContent = text;
-    sel.appendChild(opt1);
 
-    if (paySel) {
-      const opt2 = document.createElement("option");
-      opt2.value = s.rollNo;
-      opt2.textContent = text;
-      paySel.appendChild(opt2);
-    }
+  students.forEach((s) => {
+    const t = `${s.rollNo} - ${s.name}`;
+    let o1 = document.createElement("option");
+    o1.value = s.rollNo;
+    o1.textContent = t;
+    sel.appendChild(o1);
+
+    let o2 = document.createElement("option");
+    o2.value = s.rollNo;
+    o2.textContent = t;
+    paySel.appendChild(o2);
   });
 }
 
 function setupStudentsTableActions() {
   const tbody = qs("#students-tbody");
-  const regMsg = qs("#reg-message");
   const regBtn = qs("#btn-register-student");
+
   tbody.addEventListener("click", (e) => {
-    const target = e.target;
-    if (target.matches("[data-edit-roll]")) {
-      const roll = target.dataset.editRoll;
-      const student = findStudent(roll);
-      if (!student) {
-        regMsg.textContent = "Student not found.";
-        regMsg.style.color = "#b91c1c";
-        return;
-      }
-      qs("#reg-name").value = student.name;
-      qs("#reg-roll").value = student.rollNo;
-      qs("#reg-room").value = student.roomNumber;
-      qs("#reg-balance").value = student.currentBalance;
-      currentEditingRoll = student.rollNo;
+    const t = e.target;
+
+    if (t.matches("[data-edit-roll]")) {
+      const roll = t.dataset.editRoll;
+      const s = findStudent(roll);
+      if (!s) return;
+      qs("#reg-name").value = s.name;
+      qs("#reg-roll").value = s.rollNo;
+      qs("#reg-room").value = s.roomNumber;
+      qs("#reg-balance").value = s.currentBalance || 0;
+      currentEditingRoll = roll;
       regBtn.textContent = "Update Student";
-      regMsg.textContent = `Editing student ${student.rollNo}.`;
-      regMsg.style.color = "#374151";
+      return;
     }
-    if (target.matches("[data-delete-roll]")) {
-      const roll = target.dataset.deleteRoll;
-      const sure = window.confirm(
-        `Are you sure you want to delete student ${roll}?`
-      );
-      if (!sure) return;
-      const res = deleteStudent(roll);
-      regMsg.textContent = res.message;
-      regMsg.style.color = res.ok ? "#15803d" : "#b91c1c";
+
+    if (t.matches("[data-delete-roll]")) {
+      const roll = t.dataset.deleteRoll;
+      if (!confirm(`Delete student ${roll}?`)) return;
+      deleteStudent(roll);
+
       if (currentEditingRoll === roll) {
         currentEditingRoll = null;
         regBtn.textContent = "Register";
@@ -139,6 +117,7 @@ function setupStudentsTableActions() {
         qs("#reg-room").value = "";
         qs("#reg-balance").value = "0";
       }
+
       renderStudentsTable();
       populateBillingStudentSelect();
     }
@@ -146,37 +125,24 @@ function setupStudentsTableActions() {
 }
 
 export function initAdminPanel() {
-  const menu = getMenu();
-  const prices = getPrices();
-
   qs("#btn-save-menu").addEventListener("click", () => {
-    const bf = qs("#admin-menu-breakfast").value.trim();
-    const ln = qs("#admin-menu-lunch").value.trim();
-    const dn = qs("#admin-menu-dinner").value.trim();
-    const msg = qs("#admin-menu-message");
     saveMenu({
-      breakfast: bf || "Not set",
-      lunch: ln || "Not set",
-      dinner: dn || "Not set"
+      breakfast: qs("#admin-menu-breakfast").value || "Not set",
+      lunch: qs("#admin-menu-lunch").value || "Not set",
+      dinner: qs("#admin-menu-dinner").value || "Not set"
     });
-    msg.textContent = "Menu saved.";
-    msg.style.color = "#15803d";
+    qs("#admin-menu-message").textContent = "Menu saved.";
     renderTodayMenu();
     renderAdminDashboard();
   });
 
   qs("#btn-save-prices").addEventListener("click", () => {
-    const bf = Number(qs("#admin-price-breakfast").value);
-    const ln = Number(qs("#admin-price-lunch").value);
-    const dn = Number(qs("#admin-price-dinner").value);
-    const msg = qs("#admin-price-message");
     savePrices({
-      breakfast: isNaN(bf) ? 0 : bf,
-      lunch: isNaN(ln) ? 0 : ln,
-      dinner: isNaN(dn) ? 0 : dn
+      breakfast: Number(qs("#admin-price-breakfast").value) || 0,
+      lunch: Number(qs("#admin-price-lunch").value) || 0,
+      dinner: Number(qs("#admin-price-dinner").value) || 0
     });
-    msg.textContent = "Prices saved.";
-    msg.style.color = "#15803d";
+    qs("#admin-price-message").textContent = "Prices saved.";
     renderAdminDashboard();
   });
 
@@ -184,48 +150,36 @@ export function initAdminPanel() {
     const name = qs("#reg-name").value.trim();
     const roll = qs("#reg-roll").value.trim();
     const room = qs("#reg-room").value.trim();
-    const balance = qs("#reg-balance").value.trim();
-    const msg = qs("#reg-message");
-    const btn = qs("#btn-register-student");
-    msg.style.color = "#374151";
-    if (!name || !roll || !room) {
-      msg.textContent = "Name, roll and room are required.";
-      msg.style.color = "#b91c1c";
-      return;
-    }
+    const bal = Number(qs("#reg-balance").value) || 0;
+
+    if (!name || !roll || !room) return;
+
     if (currentEditingRoll) {
-      const existing = findStudent(currentEditingRoll);
-      if (!existing) {
-        msg.textContent = "Original student not found for update.";
-        msg.style.color = "#b91c1c";
-        return;
-      }
-      const updatedStudent = {
-        ...existing,
-        rollNo: roll,
+      const s = findStudent(currentEditingRoll);
+      updateStudent({
+        ...s,
         name,
+        rollNo: roll,
         roomNumber: room,
-        currentBalance: Number(balance) || 0
-      };
-      const res = updateStudent(updatedStudent);
-      msg.textContent = res.message || "Student updated.";
-      msg.style.color = res.ok ? "#15803d" : "#b91c1c";
+        currentBalance: bal,
+        totalDeposits: s.totalDeposits || bal
+      });
       currentEditingRoll = null;
-      btn.textContent = "Register";
+      qs("#btn-register-student").textContent = "Register";
     } else {
-      const res = registerStudent(roll, name, room, balance);
-      if (res instanceof Error || res.ok === false) {
-        msg.textContent = res.message || "Could not register student.";
-        msg.style.color = "#b91c1c";
-        return;
-      }
-      msg.textContent = res.message || "Student registered successfully.";
-      msg.style.color = "#15803d";
+      registerStudent(roll, name, room, bal);
+      const s = findStudent(roll);
+      updateStudent({
+        ...s,
+        totalDeposits: bal
+      });
     }
+
     qs("#reg-name").value = "";
     qs("#reg-roll").value = "";
     qs("#reg-room").value = "";
     qs("#reg-balance").value = "0";
+
     renderStudentsTable();
     populateBillingStudentSelect();
     renderAdminDashboard();
@@ -235,198 +189,140 @@ export function initAdminPanel() {
   populateBillingStudentSelect();
   setupStudentsTableActions();
 
-  const searchInput = document.querySelector("#students-search");
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      renderStudentsTable();
-    });
-  }
+  qs("#students-search").addEventListener("input", renderStudentsTable);
 
-  const payBtn = document.querySelector("#btn-add-payment");
-  const payMsg = document.querySelector("#pay-message");
-  if (payBtn && payMsg) {
-    payBtn.addEventListener("click", () => {
-      const roll = document.querySelector("#pay-roll").value;
-      const amountStr = document.querySelector("#pay-amount").value;
-      const amount = Number(amountStr);
-      payMsg.style.color = "#374151";
+  qs("#btn-add-payment").addEventListener("click", () => {
+    const roll = qs("#pay-roll").value;
+    const amount = Number(qs("#pay-amount").value);
+    if (!roll || isNaN(amount) || amount <= 0) return;
 
-      if (!roll || isNaN(amount) || amount <= 0) {
-        payMsg.textContent = "Select student and enter a positive amount.";
-        payMsg.style.color = "#b91c1c";
-        return;
-      }
+    const s = findStudent(roll);
+    const updated = {
+      ...s,
+      currentBalance: (s.currentBalance || 0) + amount,
+      totalDeposits: (s.totalDeposits || 0) + amount
+    };
 
-      const student = findStudent(roll);
-      if (!student) {
-        payMsg.textContent = "Student not found.";
-        payMsg.style.color = "#b91c1c";
-        return;
-      }
-
-      const updatedStudent = {
-        ...student,
-        currentBalance: Number(student.currentBalance || 0) + amount
-      };
-      const res = updateStudent(updatedStudent);
-      payMsg.textContent = res.message || "Payment added.";
-      payMsg.style.color = res.ok ? "#15803d" : "#b91c1c";
-
-      renderStudentsTable();
-      populateBillingStudentSelect();
-      renderAdminDashboard();
-
-      const stuRollInput = document.querySelector("#stu-roll");
-      if (stuRollInput && stuRollInput.value.trim() === roll) {
-        const balanceBadge = document.querySelector("#stu-balance-badge");
-        if (balanceBadge) {
-          balanceBadge.textContent =
-            `Remaining Balance: ${formatCurrency(updatedStudent.currentBalance)}`;
-        }
-      }
-    });
-  }
+    updateStudent(updated);
+    renderStudentsTable();
+    populateBillingStudentSelect();
+    renderAdminDashboard();
+  });
 
   qs("#btn-calc-bill").addEventListener("click", () => {
     const roll = qs("#bill-roll").value;
-    const monthInput = Number(qs("#bill-month").value);
-    const year = Number(qs("#bill-year").value);
+    const m = Number(qs("#bill-month").value);
+    const y = Number(qs("#bill-year").value);
     const out = qs("#bill-result");
-    if (!roll || isNaN(monthInput) || isNaN(year)) {
-      out.textContent = "Select student and enter valid month/year.";
+
+    if (!roll || isNaN(m) || isNaN(y) || m < 1 || m > 12) {
+      out.textContent = "Invalid month or year.";
       out.style.color = "#b91c1c";
       return;
     }
-    if (monthInput < 1 || monthInput > 12) {
-      out.textContent = "Month must be between 1 and 12.";
+
+    const student = findStudent(roll);
+    if (!student) {
+      out.textContent = "Student not found.";
       out.style.color = "#b91c1c";
       return;
     }
-    const monthIndex = monthInput - 1;
-    const bill = calculateMonthlyBill(roll, year, monthIndex);
+
+    const bill = calculateMonthlyBill(roll, y, m - 1);
     if (bill instanceof Error) {
       out.textContent = bill.message;
       out.style.color = "#b91c1c";
       return;
     }
-    const label = formatMonthYear(year, monthIndex);
-    const student = findStudent(roll);
-    const currentBalance = student ? Number(student.currentBalance || 0) : 0;
-    const remainingBalance = currentBalance - bill.total;
-    if (student) {
-      const updatedStudent = {
+
+    const key = `${y}-${m}`;
+    const prevBalance = Number(student.currentBalance || 0);
+    const billedTotals = student.billedTotals || {};
+    const prevBilled = Number(billedTotals[key] || 0);
+    const total = Number(bill.total);
+    const delta = total - prevBilled;
+
+    let newBalance = prevBalance;
+    if (delta > 0) {
+      newBalance = prevBalance - delta;
+      const updated = {
         ...student,
-        currentBalance: remainingBalance
+        currentBalance: newBalance,
+        billedTotals: {
+          ...billedTotals,
+          [key]: total
+        }
       };
-      updateStudent(updatedStudent);
+      updateStudent(updated);
+      renderStudentsTable();
+      renderAdminDashboard();
     }
-    renderStudentsTable();
-    populateBillingStudentSelect();
-    renderAdminDashboard();
-    const stuRollInput = document.querySelector("#stu-roll");
-    if (stuRollInput && stuRollInput.value.trim() === roll) {
-      const balanceBadge = document.querySelector("#stu-balance-badge");
-      if (balanceBadge) {
-        balanceBadge.textContent =
-          `Remaining Balance: ${formatCurrency(remainingBalance)}`;
-      }
-    }
+
+    const s2 = findStudent(roll);
+    const storedBalance = Number(s2.currentBalance || 0);
+
     out.style.color = "#374151";
     out.innerHTML = `
-      <div style="margin-bottom:10px;">
-        <strong>Bill for:</strong> ${bill.studentName} (${label})
-      </div>
+      <div><strong>Bill for:</strong> ${bill.studentName} (${formatMonthYear(
+      y,
+      m - 1
+    )})</div>
 
       <div class="table-wrapper" style="max-height:none;">
         <table class="billing-table">
           <thead>
-            <tr style="color: green">
-              <th>Meal</th>
-              <th>Count</th>
-              <th>Price</th>
-              <th>Total</th>
+            <tr>
+              <th>Meal</th><th>Count</th><th>Price</th><th>Total</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Breakfast</td>
-              <td>${bill.counts.breakfast}</td>
-              <td>${formatCurrency(bill.prices.breakfast)}</td>
-              <td>${formatCurrency(bill.breakdown.breakfast)}</td>
-            </tr>
-            <tr>
-              <td>Lunch</td>
-              <td>${bill.counts.lunch}</td>
-              <td>${formatCurrency(bill.prices.lunch)}</td>
-              <td>${formatCurrency(bill.breakdown.lunch)}</td>
-            </tr>
-            <tr>
-              <td>Dinner</td>
-              <td>${bill.counts.dinner}</td>
-              <td>${formatCurrency(bill.prices.dinner)}</td>
-              <td>${formatCurrency(bill.breakdown.dinner)}</td>
-            </tr>
+            <tr><td>Breakfast</td><td>${bill.counts.breakfast}</td><td>${formatCurrency(
+      bill.prices.breakfast
+    )}</td><td>${formatCurrency(bill.breakdown.breakfast)}</td></tr>
+            <tr><td>Lunch</td><td>${bill.counts.lunch}</td><td>${formatCurrency(
+      bill.prices.lunch
+    )}</td><td>${formatCurrency(bill.breakdown.lunch)}</td></tr>
+            <tr><td>Dinner</td><td>${bill.counts.dinner}</td><td>${formatCurrency(
+      bill.prices.dinner
+    )}</td><td>${formatCurrency(bill.breakdown.dinner)}</td></tr>
           </tbody>
         </table>
       </div>
 
-      <div style="margin-top:12px; font-size:1.05rem;">
-        <strong>Total:</strong> ${formatCurrency(bill.total)}
-      </div>
-      <div style="margin-top:4px;">
-        <strong>Previous Balance:</strong> ${formatCurrency(currentBalance)}
-      </div>
-      <div style="margin-top:4px;">
-        <strong>Remaining Balance:</strong> ${formatCurrency(remainingBalance)}
-      </div>
+      <div><strong>Total Bill:</strong> ${formatCurrency(total)}</div>
+      <div><strong>Previously Charged:</strong> ${formatCurrency(
+        prevBilled
+      )}</div>
+      <div><strong>Charged Now:</strong> ${formatCurrency(Math.max(delta, 0))}</div>
+      <div><strong>New Balance:</strong> ${formatCurrency(storedBalance)}</div>
     `;
   });
 
   qs("#btn-export-backup").addEventListener("click", () => {
-    const backup = exportAllData();
-    const json = JSON.stringify(backup, null, 2);
-    const blob = new Blob([json], {
+    const data = exportAllData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: "application/json"
     });
     const url = URL.createObjectURL(blob);
-    const today = new Date().toISOString().slice(0, 10);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `mess-backup-${today}.json`;
+    a.download = "mess-backup.json";
     a.click();
     URL.revokeObjectURL(url);
   });
 
   qs("#btn-import-backup").addEventListener("click", () => {
-    const fileInput = qs("#backup-file");
-    const msg = qs("#backup-message");
-    msg.style.color = "#1f2937";
-    msg.textContent = "";
-    const file = fileInput.files && fileInput.files[0];
-    if (!file) {
-      msg.textContent = "Please select a backup JSON file.";
-      msg.style.color = "#b91c1c";
-      return;
-    }
+    const f = qs("#backup-file").files[0];
+    if (!f) return;
     const reader = new FileReader();
     reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        const res = importAllData(data);
-        msg.textContent = res.message || "Import done";
-        msg.style.color = res.ok ? "#15803d" : "#b91c1c";
-        if (res.ok) {
-          renderStudentsTable();
-          populateBillingStudentSelect();
-          renderTodayMenu();
-          renderAdminDashboard();
-        }
-      } catch (e) {
-        msg.textContent = "Invalid JSON file";
-        msg.style.color = "#b91c1c";
-      }
+      importAllData(JSON.parse(reader.result));
+      renderStudentsTable();
+      populateBillingStudentSelect();
+      renderTodayMenu();
+      renderAdminDashboard();
     };
-    reader.readAsText(file);
+    reader.readAsText(f);
   });
 
   initReports();
