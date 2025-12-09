@@ -174,39 +174,54 @@ export function initReports() {
   });
 
   const pdfBtn = qs("#btn-download-report");
-if (pdfBtn) {
-  pdfBtn.addEventListener("click", async () => {
-    if (!resultDiv.innerHTML.trim()) {
-      resultDiv.textContent = "Generate a report first.";
-      resultDiv.style.color = "#b91c1c";
-      return;
-    }
+  if (pdfBtn) {
+    pdfBtn.addEventListener("click", async () => {
+      if (!resultDiv.innerHTML.trim()) {
+        resultDiv.textContent = "Generate a report first.";
+        resultDiv.style.color = "#b91c1c";
+        return;
+      }
 
-    const { jsPDF } = window.jspdf || {};
-    if (!jsPDF) {
-      alert("PDF library missing.");
-      return;
-    }
+      const { jsPDF } = window.jspdf || {};
+      if (!jsPDF) {
+        alert("PDF library missing.");
+        return;
+      }
 
-    const doc = new jsPDF({
-      orientation: "landscape",
-      unit: "pt",
-      format: "a4",
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "a4"
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const fixedWidth = 1024;
+
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "fixed";
+      wrapper.style.left = "-9999px";
+      wrapper.style.top = "0";
+      wrapper.style.width = fixedWidth + "px";
+      wrapper.style.background = "white";
+
+      const clone = resultDiv.cloneNode(true);
+      clone.style.width = "100%";
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      await doc.html(wrapper, {
+        x: margin,
+        y: margin,
+        width: pageWidth - margin * 2,
+        windowWidth: fixedWidth,
+        html2canvas: { scale: 1 }
+      });
+
+      document.body.removeChild(wrapper);
+      doc.save("meal-report.pdf");
     });
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-
-    await doc.html(resultDiv, {
-      callback: (doc) => doc.save("meal-report.pdf"),
-      x: margin,
-      y: margin,
-      width: pageWidth - margin * 2,
-      windowWidth: pageWidth,
-      html2canvas: { scale: 1 }
-    });
-  });
-}
+  }
 
   const jpgBtn = qs("#btn-download-report-jpg");
   if (jpgBtn) {
