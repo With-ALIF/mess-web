@@ -1,4 +1,5 @@
-# 🌟 Student Hall Mess Management System — Detailed Description
+# 🌟 Student Hall Mess Management System 
+
 <p align="center"> <img src="https://img.shields.io/badge/HTML5-Expert-orange?style=for-the-badge&logo=html5" /> <img src="https://img.shields.io/badge/JavaScript-ES%20Modules-yellow?style=for-the-badge&logo=javascript" /> <img src="https://img.shields.io/badge/LocalStorage-Offline%20Data-green?style=for-the-badge&logo=googlechrome" /> <img src="https://img.shields.io/badge/PDF-jsPDF-red?style=for-the-badge&logo=adobe" /> <img src="https://img.shields.io/badge/JPG-html2canvas-purple?style=for-the-badge" /> </p>
 
 The **Student Hall Mess Management System** is a fully offline, browser-based application designed to automate and simplify daily and monthly mess operations inside a university hall or dormitory.  
