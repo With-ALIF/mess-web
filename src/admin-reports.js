@@ -125,6 +125,7 @@ export function initReports() {
     else if (t === "monthly") document.querySelector(".rep-monthly").style.display = "block";
     else document.querySelector(".rep-range").style.display = "block";
     resultDiv.textContent = "";
+    resultDiv.style.color = "";
   }
 
   typeSel.addEventListener("change", updateFields);
@@ -167,6 +168,7 @@ export function initReports() {
       }
 
       renderMealsReport(report);
+      resultDiv.style.color = "";
     } catch (e) {
       resultDiv.textContent = e.message || "Could not generate report.";
       resultDiv.style.color = "#b91c1c";
@@ -175,7 +177,7 @@ export function initReports() {
 
   const pdfBtn = qs("#btn-download-report");
   if (pdfBtn) {
-    pdfBtn.addEventListener("click", () => {
+    pdfBtn.addEventListener("click", async () => {
       if (!resultDiv.innerHTML.trim()) {
         resultDiv.textContent = "Generate a report first.";
         resultDiv.style.color = "#b91c1c";
@@ -188,39 +190,52 @@ export function initReports() {
         return;
       }
 
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "pt",
-        format: "a4"
-      });
+      if (typeof html2canvas !== "function") {
+        alert("html2canvas library missing.");
+        return;
+      }
 
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 20;
-      const fixedWidth = 1024;
+      try {
+        const canvas = await html2canvas(resultDiv, {
+          scale: 2
+        });
 
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "fixed";
-      wrapper.style.left = "-9999px";
-      wrapper.style.top = "0";
-      wrapper.style.width = fixedWidth + "px";
-      wrapper.style.background = "white";
+        const imgData = canvas.toDataURL("image/png");
 
-      const clone = resultDiv.cloneNode(true);
-      clone.style.width = "100%";
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
+        const pdf = new jsPDF({
+          orientation: "landscape",
+          unit: "pt",
+          format: "a4"
+        });
 
-      doc.html(wrapper, {
-        x: margin,
-        y: margin,
-        width: pageWidth - margin * 2,
-        windowWidth: fixedWidth,
-        html2canvas: { scale: 1 },
-        callback: (docInstance) => {
-          document.body.removeChild(wrapper);
-          docInstance.save("meal-report.pdf");
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        if (imgHeight <= pageHeight) {
+          pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        } else {
+          let position = 0;
+          let remainingHeight = imgHeight;
+
+          while (remainingHeight > 0) {
+            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+            remainingHeight -= pageHeight;
+            if (remainingHeight > 0) {
+              pdf.addPage();
+              position = 0;
+            }
+          }
         }
-      });
+
+        pdf.save("meal-report.pdf");
+      } catch (e) {
+        console.error(e);
+        resultDiv.textContent = "Could not generate PDF.";
+        resultDiv.style.color = "#b91c1c";
+      }
     });
   }
 
