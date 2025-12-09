@@ -1,0 +1,91 @@
+@media (max-width: 900px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tabs {
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .root {
+    padding: 12px;
+    margin: 16px auto;
+    max-width: 100%;
+  }
+  .app-card {
+    padding: 16px 14px 18px;
+  }
+  .layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .table,
+  .billing-table,
+  .summary-table,
+  .report-table {
+    font-size: 0.9rem;
+  }
+  .table th,
+  .table td,
+  .billing-table th,
+  .billing-table td,
+  .summary-table th,
+  .summary-table td,
+  .report-table th,
+  .report-table td {
+    padding: 6px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 18px;
+  }
+  .app-title {
+    font-size: 1.7rem;
+  }
+  .card-title {
+    font-size: 1.25rem;
+  }
+  .form-label,
+  .form-input,
+  .form-select,
+  .btn,
+  .badge,
+  .muted {
+    font-size: 1.05rem;
+  }
+  .btn {
+    width: 100%;
+    margin-top: 4px;
+    padding: 9px 14px;
+  }
+  .row {
+    flex-direction: column;
+  }
+  .table,
+  .billing-table,
+  .summary-table,
+  .report-table {
+    font-size: 0.9rem;
+  }
+  .table th,
+  .table td,
+  .billing-table th,
+  .billing-table td,
+  .summary-table th,
+  .summary-table td,
+  .report-table th,
+  .report-table td {
+    padding: 5px 6px;
+  }
+}
+
+.summary-table,
+.report-table {
+  width: 100%;
+  table-layout: fixed;
+}
