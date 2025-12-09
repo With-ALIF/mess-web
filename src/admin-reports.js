@@ -175,7 +175,7 @@ export function initReports() {
 
   const pdfBtn = qs("#btn-download-report");
   if (pdfBtn) {
-    pdfBtn.addEventListener("click", async () => {
+    pdfBtn.addEventListener("click", () => {
       if (!resultDiv.innerHTML.trim()) {
         resultDiv.textContent = "Generate a report first.";
         resultDiv.style.color = "#b91c1c";
@@ -189,7 +189,7 @@ export function initReports() {
       }
 
       const doc = new jsPDF({
-        orientation: "portrait",
+        orientation: "landscape",
         unit: "pt",
         format: "a4"
       });
@@ -210,16 +210,17 @@ export function initReports() {
       wrapper.appendChild(clone);
       document.body.appendChild(wrapper);
 
-      await doc.html(wrapper, {
+      doc.html(wrapper, {
         x: margin,
         y: margin,
         width: pageWidth - margin * 2,
         windowWidth: fixedWidth,
-        html2canvas: { scale: 1 }
+        html2canvas: { scale: 1 },
+        callback: (docInstance) => {
+          document.body.removeChild(wrapper);
+          docInstance.save("meal-report.pdf");
+        }
       });
-
-      document.body.removeChild(wrapper);
-      doc.save("meal-report.pdf");
     });
   }
 
