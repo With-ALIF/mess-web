@@ -1,33 +1,31 @@
 import html2canvas from "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js";
 
-export async function downloadReportJPG(resultDiv) {
-  const fixedWidth = 1024;
 
-  const wrapper = document.createElement("div");
-  wrapper.style.position = "fixed";
-  wrapper.style.left = "-9999px";
-  wrapper.style.top = "0";
-  wrapper.style.width = fixedWidth + "px";
-  wrapper.style.background = "white";
+export function downloadReportJPG(element) {
+  if (typeof html2canvas !== "function") {
+    alert("html2canvas library missing.");
+    return;
+  }
 
-  const clone = resultDiv.cloneNode(true);
-  clone.style.width = "100%";
-  wrapper.appendChild(clone);
-  document.body.appendChild(wrapper);
+  html2canvas(element, { scale: 2 }).then((canvas) => {
+    const margin = 5; // চারপাশে ৫px মার্জিন
 
-  const canvas = await html2canvas(wrapper, {
-    scale: 2,
-    width: fixedWidth,
-    windowWidth: fixedWidth
+    const newCanvas = document.createElement("canvas");
+    newCanvas.width = canvas.width + margin * 2;
+    newCanvas.height = canvas.height + margin * 2;
+
+    const ctx = newCanvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+    ctx.drawImage(canvas, margin, margin);
+
+    const link = document.createElement("a");
+    link.download = "meal-report.jpg";
+    link.href = newCanvas.toDataURL("image/jpeg", 1.0);
+    link.click();
+  }).catch((e) => {
+    console.error(e);
+    alert("Could not generate JPG.");
   });
-
-  document.body.removeChild(wrapper);
-
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
-  const link = document.createElement("a");
-  link.href = dataUrl;
-  link.download = "meal-report.jpg";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
