@@ -2,7 +2,7 @@
 
 A modern, browser-based system to manage a university hall mess — from daily meal booking to monthly billing — built with **HTML, CSS, and Vanilla JavaScript (ES Modules)** and powered by `localStorage`.
 
-[▶️ Live Demo](https://with-alif.github.io/mess-web/)  
+[▶️ Visit Our Site](https://with-alif.github.io/mess-web/)  
 
 ---
 
@@ -62,7 +62,7 @@ A modern, browser-based system to manage a university hall mess — from daily m
 <img src="./picture/overview.jpg" width="300">
 
 ### Meal Booking
-<img src="./picture/booking.jpg" width="300" style="max-height:400px;">
+<img src="./picture/booking.jpg" width="300" style="max-height:300px;">
 
 ### Meal Report (PDF / JPG Export)
 <img src="./picture/meal-report.jpg" width="300">
