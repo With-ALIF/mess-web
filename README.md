@@ -59,14 +59,13 @@ A modern, browser-based system to manage a university hall mess — from daily m
 > Folder: `./picture/`
 
 ### Dashboard / Overview
-![Overview](./picture/overview.jpg)
+<img src="./picture/overview.jpg" width="300">
 
 ### Meal Booking
-![Booking](./picture/booking.jpg)
+<img src="./picture/booking.jpg" width="300">
 
 ### Meal Report (PDF / JPG Export)
-![Meal Report](./picture/meal-report.jpg)
-
+<img src="./picture/meal-report.jpg" width="300">
 ---
 
 ## 🛠 Tech Stack
