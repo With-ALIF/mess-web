@@ -218,7 +218,12 @@ export function initReports() {
         const y = (pageHeight - imgHeight) / 2;
 
         pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
-        pdf.save("meal-report.pdf");
+        pdf.autoPrint();
+        const blobUrl = pdf.output("bloburl");
+        const win = window.open(blobUrl, "_blank");
+        if (!win) {
+          pdf.save("meal-report.pdf");
+        }
       } catch (e) {
         console.error(e);
         resultDiv.textContent = "Could not generate PDF.";
