@@ -1,12 +1,12 @@
 # 🌟 Student Hall Mess Management System 
 
-<p align="center"> <img src="https://img.shields.io/badge/HTML5-Expert-orange?style=for-the-badge&logo=html5" /> <img src="https://img.shields.io/badge/JavaScript-ES%20Modules-yellow?style=for-the-badge&logo=javascript" /> <img src="https://img.shields.io/badge/LocalStorage-Offline%20Data-green?style=for-the-badge&logo=googlechrome" /> <img src="https://img.shields.io/badge/PDF-jsPDF-red?style=for-the-badge&logo=adobe" /> <img src="https://img.shields.io/badge/JPG-html2canvas-purple?style=for-the-badge" /> </p>
+<p align="justify"> <img src="https://img.shields.io/badge/HTML5-Expert-orange?style=for-the-badge&logo=html5" /> <img src="https://img.shields.io/badge/JavaScript-ES%20Modules-yellow?style=for-the-badge&logo=javascript" /> <img src="https://img.shields.io/badge/LocalStorage-Offline%20Data-green?style=for-the-badge&logo=googlechrome" /> <img src="https://img.shields.io/badge/PDF-jsPDF-red?style=for-the-badge&logo=adobe" /> <img src="https://img.shields.io/badge/JPG-html2canvas-purple?style=for-the-badge" /> </p>
 
-The **Student Hall Mess Management System** is a fully offline, browser-based application designed to automate and simplify daily and monthly mess operations inside a university hall or dormitory.  
+<p align="justify">The **Student Hall Mess Management System** is a fully offline, browser-based application designed to automate and simplify daily and monthly mess operations inside a university hall or dormitory.  
 Built with **HTML, CSS, and Vanilla JavaScript (ES Modules)**, the system stores all data in `localStorage`, requiring no backend or external database.  
 Despite being lightweight, it delivers the functionality of a complete management platform.
 
-The project aims to provide a **modern, fast, and intuitive** interface for both students and administrators, featuring real-time updates, accurate meal tracking, smart billing automation, and professional reporting tools.
+The project aims to provide a **modern, fast, and intuitive** interface for both students and administrators, featuring real-time updates, accurate meal tracking, smart billing automation, and professional reporting tools.</p>
 
 ---
 <b>🚀 <h1>Live Demo</h1></b>
