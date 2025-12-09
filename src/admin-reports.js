@@ -152,7 +152,6 @@ export function initReports() {
           resultDiv.style.color = "#b91c1c";
           return;
         }
-        // m - 1 = 0-based month index
         report = getMonthlyMealsReport(y, m - 1);
       } else {
         const fromStr = qs("#rep-from").value;
@@ -176,7 +175,6 @@ export function initReports() {
     }
   });
 
-  // ---------- PDF DOWNLOAD (FIXED) ----------
   const pdfBtn = qs("#btn-download-report");
   if (pdfBtn) {
     pdfBtn.addEventListener("click", async () => {
@@ -186,10 +184,9 @@ export function initReports() {
         return;
       }
 
-      // jsPDF v2 থেকে কনস্ট্রাক্টর নেওয়া
-      const JsPDF = window.jspdf && window.jspdf.jsPDF;
-      if (!JsPDF) {
-        alert("PDF library missing (jsPDF).");
+      const { jsPDF } = window.jspdf || {};
+      if (!jsPDF) {
+        alert("PDF library missing.");
         return;
       }
 
@@ -199,29 +196,25 @@ export function initReports() {
       }
 
       try {
-        // রিপোর্ট DIV কে ক্যানভাসে রেন্ডার করি
         const canvas = await html2canvas(resultDiv, {
-          scale: 2,          // কোয়ালিটি ভালো রাখার জন্য
+          scale: 2,
           useCORS: true,
           backgroundColor: "#ffffff"
         });
 
-        // JPG এর মতই ক্লিয়ার ইমেজ
         const imgData = canvas.toDataURL("image/jpeg", 1.0);
 
-        // A4 portrait
-        const pdf = new JsPDF("p", "mm", "a4");
+        const pdf = new jsPDF("p", "mm", "a4");
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
 
-        const margin = 10; // চারপাশে সামান্য মার্জিন
+        const margin = 10;
         const maxWidth = pageWidth - margin * 2;
         const maxHeight = pageHeight - margin * 2;
 
         let imgWidth = maxWidth;
         let imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // প্রয়োজন হলে height স্কেল করে নিই
         if (imgHeight > maxHeight) {
           imgHeight = maxHeight;
           imgWidth = (canvas.width * imgHeight) / canvas.height;
@@ -233,14 +226,12 @@ export function initReports() {
         pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
         pdf.save("meal-report.pdf");
       } catch (e) {
-        console.error(e);
         resultDiv.textContent = "Could not generate PDF.";
         resultDiv.style.color = "#b91c1c";
       }
     });
   }
 
-  // ---------- JPG DOWNLOAD (আগের মতই) ----------
   const jpgBtn = qs("#btn-download-report-jpg");
   if (jpgBtn) {
     jpgBtn.addEventListener("click", () => {
