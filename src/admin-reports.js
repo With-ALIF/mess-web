@@ -174,39 +174,39 @@ export function initReports() {
   });
 
   const pdfBtn = qs("#btn-download-report");
-  if (pdfBtn) {
-    pdfBtn.addEventListener("click", async () => {
-      if (!resultDiv.innerHTML.trim()) {
-        resultDiv.textContent = "Generate a report first.";
-        resultDiv.style.color = "#b91c1c";
-        return;
-      }
+if (pdfBtn) {
+  pdfBtn.addEventListener("click", async () => {
+    if (!resultDiv.innerHTML.trim()) {
+      resultDiv.textContent = "Generate a report first.";
+      resultDiv.style.color = "#b91c1c";
+      return;
+    }
 
-      const { jsPDF } = window.jspdf || {};
-      if (!jsPDF) {
-        alert("PDF library missing.");
-        return;
-      }
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) {
+      alert("PDF library missing.");
+      return;
+    }
 
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "pt",
-        format: "a4",
-      });
-
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 20;
-
-      await doc.html(resultDiv, {
-        callback: (doc) => doc.save("meal-report.pdf"),
-        x: margin,
-        y: margin,
-        width: pageWidth - margin * 2,
-        windowWidth: resultDiv.scrollWidth || resultDiv.offsetWidth,
-        html2canvas: { scale: 0.8 },
-      });
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "pt",
+      format: "a4",
     });
-  }
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+
+    await doc.html(resultDiv, {
+      callback: (doc) => doc.save("meal-report.pdf"),
+      x: margin,
+      y: margin,
+      width: pageWidth - margin * 2,
+      windowWidth: pageWidth,
+      html2canvas: { scale: 1 }
+    });
+  });
+}
 
   const jpgBtn = qs("#btn-download-report-jpg");
   if (jpgBtn) {
