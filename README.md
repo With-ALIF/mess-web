@@ -62,7 +62,7 @@ A modern, browser-based system to manage a university hall mess — from daily m
 <img src="./picture/overview.jpg" width="300">
 
 ### Meal Booking
-<img src="./picture/booking.jpg" width="300">
+<img src="./picture/booking.jpg" width="300" style="max-height:400px;">
 
 ### Meal Report (PDF / JPG Export)
 <img src="./picture/meal-report.jpg" width="300">
