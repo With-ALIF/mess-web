@@ -1,4 +1,4 @@
-import { qs, formatCurrency, parseDateInputValue } from "./utils.js";
+ import { qs, formatCurrency, parseDateInputValue } from "./utils.js";
 import { getDailyMealsReport, getMonthlyMealsReport, getRangeMealsReport } from "./billing.js";
 import { downloadReportJPG } from "./picture.js";
 
@@ -195,22 +195,26 @@ export function initReports() {
         return;
       }
 
-      const originalWidth = resultDiv.style.width;
-      const originalMaxWidth = resultDiv.style.maxWidth;
-
-      resultDiv.style.width = "1100px";
-      resultDiv.style.maxWidth = "1100px";
+      const clone = resultDiv.cloneNode(true);
+      clone.style.position = "fixed";
+      clone.style.left = "0";
+      clone.style.top = "0";
+      clone.style.width = "1200px";
+      clone.style.maxWidth = "1200px";
+      clone.style.background = "#ffffff";
+      clone.style.zIndex = "-1";
+      document.body.appendChild(clone);
 
       try {
-        const canvas = await html2canvas(resultDiv, {
+        const canvas = await html2canvas(clone, {
           scale: 2,
+          width: 1200,
+          windowWidth: 1200,
           scrollX: 0,
-          scrollY: -window.scrollY,
-          windowWidth: 1100
+          scrollY: 0
         });
 
-        resultDiv.style.width = originalWidth;
-        resultDiv.style.maxWidth = originalMaxWidth;
+        document.body.removeChild(clone);
 
         const imgData = canvas.toDataURL("image/png");
 
@@ -237,8 +241,7 @@ export function initReports() {
           pdf.save("meal-report.pdf");
         }
       } catch (e) {
-        resultDiv.style.width = originalWidth;
-        resultDiv.style.maxWidth = originalMaxWidth;
+        document.body.removeChild(clone);
         console.error(e);
         resultDiv.textContent = "Could not generate PDF.";
         resultDiv.style.color = "#b91c1c";
