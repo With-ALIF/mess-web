@@ -217,7 +217,7 @@ export function initReports() {
         document.body.removeChild(clone);
 
         // === ৫px মার্জিন সহ নতুন ক্যানভাস তৈরি ===
-        const marginPx = 5; // চারপাশে ৫px করে মার্জিন
+        const marginPx = 2; // চারপাশে 2px করে মার্জিন
         const canvasWithMargin = document.createElement("canvas");
         canvasWithMargin.width = canvas.width + marginPx * 2;
         canvasWithMargin.height = canvas.height + marginPx * 2;
