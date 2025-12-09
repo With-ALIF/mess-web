@@ -195,10 +195,22 @@ export function initReports() {
         return;
       }
 
+      const originalWidth = resultDiv.style.width;
+      const originalMaxWidth = resultDiv.style.maxWidth;
+
+      resultDiv.style.width = "1100px";
+      resultDiv.style.maxWidth = "1100px";
+
       try {
         const canvas = await html2canvas(resultDiv, {
-          scale: 2
+          scale: 2,
+          scrollX: 0,
+          scrollY: -window.scrollY,
+          windowWidth: 1100
         });
+
+        resultDiv.style.width = originalWidth;
+        resultDiv.style.maxWidth = originalMaxWidth;
 
         const imgData = canvas.toDataURL("image/png");
 
@@ -225,6 +237,8 @@ export function initReports() {
           pdf.save("meal-report.pdf");
         }
       } catch (e) {
+        resultDiv.style.width = originalWidth;
+        resultDiv.style.maxWidth = originalMaxWidth;
         console.error(e);
         resultDiv.textContent = "Could not generate PDF.";
         resultDiv.style.color = "#b91c1c";
