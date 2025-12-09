@@ -1,4 +1,4 @@
- import { qs, formatCurrency, parseDateInputValue } from "./utils.js";
+import { qs, formatCurrency, parseDateInputValue } from "./utils.js";
 import { getDailyMealsReport, getMonthlyMealsReport, getRangeMealsReport } from "./billing.js";
 import { downloadReportJPG } from "./picture.js";
 
@@ -216,18 +216,29 @@ export function initReports() {
 
         document.body.removeChild(clone);
 
-        const imgData = canvas.toDataURL("image/png");
+        // === ৫px মার্জিন সহ নতুন ক্যানভাস তৈরি ===
+        const marginPx = 5; // চারপাশে ৫px করে মার্জিন
+        const canvasWithMargin = document.createElement("canvas");
+        canvasWithMargin.width = canvas.width + marginPx * 2;
+        canvasWithMargin.height = canvas.height + marginPx * 2;
+
+        const ctx = canvasWithMargin.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvasWithMargin.width, canvasWithMargin.height);
+        ctx.drawImage(canvas, marginPx, marginPx);
+
+        const imgData = canvasWithMargin.toDataURL("image/png");
 
         const pdf = new jsPDF("landscape", "mm", "a4");
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
 
         let imgWidth = pageWidth;
-        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let imgHeight = (canvasWithMargin.height * imgWidth) / canvasWithMargin.width;
 
         if (imgHeight > pageHeight) {
           imgHeight = pageHeight;
-          imgWidth = (canvas.width * imgHeight) / canvas.height;
+          imgWidth = (canvasWithMargin.width * imgHeight) / canvasWithMargin.height;
         }
 
         const x = (pageWidth - imgWidth) / 2;
@@ -257,6 +268,7 @@ export function initReports() {
         resultDiv.style.color = "#b91c1c";
         return;
       }
+      // JPG এর মার্জিন downloadReportJPG() এর ভিতরে হ্যান্ডেল করবো
       downloadReportJPG(resultDiv);
     });
   }
