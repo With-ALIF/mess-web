@@ -1,27 +1,33 @@
 import html2canvas from "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js";
 
-export async function downloadReportJPG(targetEl) {
-  const box = targetEl || document.querySelector("#rep-result");
+export async function downloadReportJPG(resultDiv) {
+  const fixedWidth = 1024;
 
-  if (!box) {
-    alert("Report container not found.");
-    return;
-  }
+  const wrapper = document.createElement("div");
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-9999px";
+  wrapper.style.top = "0";
+  wrapper.style.width = fixedWidth + "px";
+  wrapper.style.background = "white";
 
-  if (!box.innerHTML.trim()) {
-    alert("No report found to download.");
-    return;
-  }
+  const clone = resultDiv.cloneNode(true);
+  clone.style.width = "100%";
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
 
-  const canvas = await html2canvas(box, {
+  const canvas = await html2canvas(wrapper, {
     scale: 2,
-    backgroundColor: "#ffffff"
+    width: fixedWidth,
+    windowWidth: fixedWidth
   });
 
-  const jpg = canvas.toDataURL("image/jpeg", 0.95);
+  document.body.removeChild(wrapper);
 
-  const a = document.createElement("a");
-  a.href = jpg;
-  a.download = "meal-report.jpg";
-  a.click();
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = "meal-report.jpg";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
