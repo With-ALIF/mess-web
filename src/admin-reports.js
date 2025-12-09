@@ -202,34 +202,22 @@ export function initReports() {
 
         const imgData = canvas.toDataURL("image/png");
 
-        const pdf = new jsPDF({
-          orientation: "landscape",
-          unit: "pt",
-          format: "a4"
-        });
-
+        const pdf = new jsPDF("landscape", "mm", "a4");
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
 
-        const imgWidth = pageWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let imgWidth = pageWidth;
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        if (imgHeight <= pageHeight) {
-          pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-        } else {
-          let position = 0;
-          let remainingHeight = imgHeight;
-
-          while (remainingHeight > 0) {
-            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-            remainingHeight -= pageHeight;
-            if (remainingHeight > 0) {
-              pdf.addPage();
-              position = 0;
-            }
-          }
+        if (imgHeight > pageHeight) {
+          imgHeight = pageHeight;
+          imgWidth = (canvas.width * imgHeight) / canvas.height;
         }
 
+        const x = (pageWidth - imgWidth) / 2;
+        const y = (pageHeight - imgHeight) / 2;
+
+        pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
         pdf.save("meal-report.pdf");
       } catch (e) {
         console.error(e);
